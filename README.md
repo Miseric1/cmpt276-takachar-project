@@ -13,6 +13,11 @@ SupportSync is a web-based Customer Feedback & Support Management System designe
 Takachar currently lacks a centralized system for managing customer feedback, support requests, and knowledge base documentation. Customer interactions and internal support processes are currently handled in a more manual way, such as Telegram or email. Because of this, there is a need for a centralized system that connects feedback, documentation, and support workflows in one place.
 
 ---
+## Existing Systems
+
+Existing systems such as Zendesk, Freshdesk, and Jira Service Management already provide customer support, feedback tracking, and ticketing features, but they are often complex and designed for large enterprises. SupportSync improves on this by offering a simpler, unified system that combines feedback, knowledge base, and ticketing workflows in one platform tailored for Takachar.
+
+---
 
 ## Proposed Solution
 
