@@ -1,0 +1,19 @@
+# Ignore build directories and IDE files
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!target/*.jar
+
+# Ignore Git files
+.git
+.gitignore
+.gitattributes
+
+# Ignore IDE files
+.idea/
+.vscode/
+*.iml
+
+# General ignores
+*.class
+*~
+*.log
