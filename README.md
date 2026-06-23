@@ -64,5 +64,4 @@ Internal APIs within the Spring Boot backend will handle ticket matching logic a
 
 In addition, the system will integrate the Hugging Face Inference API for sentiment analysis of customer feedback. This API will classify feedback as positive, neutral, or negative, helping administrators prioritize urgent issues and analyze customer satisfaction trends.
 
-All API communication will be handled using HTTP requests within the Spring Boot backend to ensure modularity and separation of concerns between services.
 --- 
