@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+</head>
+<body>
+
+<h1>Register</h1>
+
+<div th:if="${param.error}">
+    <p style="color:red;">That email is already registered.</p>
+</div>
+
+<form th:action="@{/register}" th:object="${user}" method="post" id="registerForm">
+
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+    <label for="email">Email:</label><br>
+    <input type="email" id="email" th:field="*{email}" required />
+    <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" style="color:red;"></span>
+
+    <br><br>
+    <label for="password">Password:</label><br>
+    <input type="password" id="password" th:field="*{password}" required minlength="8" />
+    <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" style="color:red;"></span>
+
+    <br><br>
+
+    <label for="confirmPassword">Confirm Password:</label><br>
+    <input type="password" id="confirmPassword" required />
+    <span id="matchError" style="display:none; color:red;">Passwords don't match</span>
+
+    <br><br>
+
+    <button type="submit">Create Account</button>
+
+</form>
+
+<p>Already have an account? <a th:href="@{/login}">Log in</a></p>
+
+<script>
+    document.getElementById("registerForm").addEventListener("submit", function(e) {
+        const password = document.getElementById("password").value;
+        const confirm = document.getElementById("confirmPassword").value;
+        const matchError = document.getElementById("matchError");
+
+        if (password !== confirm) {
+            e.preventDefault();
+            matchError.style.display = "inline";
+        }
+    });
+</script>
+
+</body>
+</html>

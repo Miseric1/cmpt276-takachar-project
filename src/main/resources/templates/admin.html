@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Admin Home</title></head>
+<body>
+<h1>Welcome, Admin <span th:text="${email}"></span></h1>
+<form th:action="@{/logout}" method="post">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <button type="submit">Log Out</button>
+</form>
+</body>
+</html>
