@@ -7,7 +7,18 @@
 <body>
     <h1>Welcome to SupportSync</h1>
     <p>Takachar's customer feedback and support platform.</p>
-    <a th:href="@{/login}">Log In</a>
-    <a th:href="@{/register}">Register</a>
+    
+    <div sec:authorize="isAnonymous()">
+        <a th:href="@{/login}">Log In</a>
+        <a th:href="@{/register}">Register</a>
+    </div>
+    
+    <!-- LOGGED IN -->
+    <div sec:authorize="isAuthenticated()">
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <button type="submit">Log Out</button>
+        </form>
+    </div>
 </body>
 </html>
