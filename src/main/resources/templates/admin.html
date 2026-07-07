@@ -1,11 +1,76 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><title>Admin Home</title></head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+</head>
 <body>
-<h1>Welcome, Admin <span th:text="${email}"></span></h1>
-<form th:action="@{/logout}" method="post">
-    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-    <button type="submit">Log Out</button>
-</form>
+
+    <h1>Admin Dashboard</h1>
+
+    <p>
+        Welcome, <span th:text="${email}">admin@example.com</span>
+    </p>
+
+    <section>
+        <h2>Feedback Summary</h2>
+
+        <p>
+            Total feedback:
+            <strong th:text="${totalFeedback}">0</strong>
+        </p>
+
+        <p>
+            Open feedback:
+            <strong th:text="${openFeedback}">0</strong>
+        </p>
+    </section>
+
+    <section>
+        <h2>Customer Feedback</h2>
+
+        <p th:if="${#lists.isEmpty(feedbackList)}">
+            No feedback has been submitted.
+        </p>
+
+        <table th:unless="${#lists.isEmpty(feedbackList)}" border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Category</th>
+                    <th>Project</th>
+                    <th>Company/Account</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Submitted By</th>
+                    <th>Submitted At</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr th:each="feedback : ${feedbackList}">
+                    <td th:text="${feedback.id}">1</td>
+                    <td th:text="${feedback.category}">Product</td>
+                    <td th:text="${feedback.project}">Project</td>
+                    <td th:text="${feedback.account}">Company</td>
+                    <td th:text="${feedback.description}">Description</td>
+                    <td th:text="${feedback.status}">OPEN</td>
+                    <td th:text="${feedback.createdBy}">customer@example.com</td>
+                    <td th:text="${feedback.createdAt}">Date</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <form th:action="@{/logout}" method="post">
+        <input
+            type="hidden"
+            th:name="${_csrf.parameterName}"
+            th:value="${_csrf.token}"
+        >
+        <button type="submit">Log Out</button>
+    </form>
+
 </body>
 </html>
