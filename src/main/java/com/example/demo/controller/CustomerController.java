@@ -11,6 +11,6 @@ public class CustomerController {
     @GetMapping("/customer/home")
     public String customerHome(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("email", userDetails.getUsername());
-        return "index";
+        return "customer";
     }
 }
