@@ -4,73 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
-<body>
+<body class="dashboard-body">
 
-    <h1>Admin Dashboard</h1>
+<div class="dashboard-shell dashboard-shell--wide">
+    <div class="dashboard-topbar">
+        <div>
+            <h1>Admin Dashboard</h1>
+            <p>Welcome, <span th:text="${email}">admin@example.com</span></p>
+        </div>
 
-    <p>
-        Welcome, <span th:text="${email}">admin@example.com</span>
-    </p>
+        <form th:action="@{/logout}" method="post">
+            <input
+                    type="hidden"
+                    th:name="${_csrf.parameterName}"
+                    th:value="${_csrf.token}"
+            >
+            <button type="submit" class="btn btn-secondary btn-inline">Log Out</button>
+        </form>
+    </div>
 
-    <section>
+    <div class="dashboard-card">
         <h2>Feedback Summary</h2>
+        <p class="dashboard-subtext">An overview of all customer feedback submitted so far.</p>
 
-        <p>
-            Total feedback:
-            <strong th:text="${totalFeedback}">0</strong>
-        </p>
+        <div class="stat-row">
+            <div class="stat-card">
+                <span class="stat-value" th:text="${totalFeedback}">0</span>
+                <span class="stat-label">Total Feedback</span>
+            </div>
 
-        <p>
-            Open feedback:
-            <strong th:text="${openFeedback}">0</strong>
-        </p>
-    </section>
+            <div class="stat-card">
+                <span class="stat-value" th:text="${openFeedback}">0</span>
+                <span class="stat-label">Open Feedback</span>
+            </div>
+        </div>
+    </div>
 
-    <section>
+    <div class="dashboard-card" style="margin-top: 24px;">
         <h2>Customer Feedback</h2>
 
-        <p th:if="${#lists.isEmpty(feedbackList)}">
+        <p class="dashboard-subtext" th:if="${#lists.isEmpty(feedbackList)}">
             No feedback has been submitted.
         </p>
 
-        <table th:unless="${#lists.isEmpty(feedbackList)}" border="1">
+        <div class="table-scroll">
+            <table class="feedback-table" th:unless="${#lists.isEmpty(feedbackList)}">
             <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Category</th>
-                    <th>Project</th>
-                    <th>Company/Account</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>Submitted By</th>
-                    <th>Submitted At</th>
-                </tr>
+            <tr>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Project</th>
+                <th>Company/Account</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Submitted By</th>
+                <th>Submitted At</th>
+            </tr>
             </thead>
 
             <tbody>
-                <tr th:each="feedback : ${feedbackList}">
-                    <td th:text="${feedback.id}">1</td>
-                    <td th:text="${feedback.category}">Product</td>
-                    <td th:text="${feedback.project}">Project</td>
-                    <td th:text="${feedback.account}">Company</td>
-                    <td th:text="${feedback.description}">Description</td>
-                    <td th:text="${feedback.status}">OPEN</td>
-                    <td th:text="${feedback.createdBy}">customer@example.com</td>
-                    <td th:text="${feedback.createdAt}">Date</td>
-                </tr>
+            <tr th:each="feedback : ${feedbackList}">
+                <td th:text="${feedback.id}">1</td>
+                <td th:text="${feedback.category}">Product</td>
+                <td th:text="${feedback.project}">Project</td>
+                <td th:text="${feedback.account}">Company</td>
+                <td>
+    <div class="description-clamp" th:text="${feedback.description}">Description</div>
+</td>
+                <td>
+                            <span
+                                    th:text="${feedback.status}"
+                                    th:class="${feedback.status == 'OPEN'} ? 'status-badge status-open' : 'status-badge status-other'"
+                            >OPEN</span>
+                </td>
+                <td th:text="${feedback.createdBy}">customer@example.com</td>
+                <td th:text="${#temporals.format(feedback.createdAt, 'yyyy-MM-dd HH:mm')}">Date</td>
+            </tr>
             </tbody>
         </table>
-    </section>
+        </div>
+    </div>
 
-    <form th:action="@{/logout}" method="post">
-        <input
-            type="hidden"
-            th:name="${_csrf.parameterName}"
-            th:value="${_csrf.token}"
-        >
-        <button type="submit">Log Out</button>
-    </form>
+</div>
 
 </body>
 </html>
