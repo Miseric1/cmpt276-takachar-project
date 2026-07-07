@@ -13,9 +13,64 @@
         Welcome, <span th:text="${email}">customer@example.com</span>
     </p>
 
+    <p th:if="${param.submitted}">
+        Feedback submitted successfully.
+    </p>
+
     <section>
         <h2>Submit Feedback</h2>
-        <p>You will be able to submit and track your feedback here.</p>
+
+        <form th:action="@{/customer/feedback}" method="post">
+
+            <div>
+                <label for="category">Category</label>
+                <select id="category" name="category" required>
+                    <option value="">Select a category</option>
+                    <option value="PRODUCT">Product</option>
+                    <option value="TECHNICAL">Technical Issue</option>
+                    <option value="SERVICE">Customer Service</option>
+                    <option value="OTHER">Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="project">Project</label>
+                <input
+                    id="project"
+                    name="project"
+                    type="text"
+                    required
+                >
+            </div>
+
+            <div>
+                <label for="account">Company or Account</label>
+                <input
+                    id="account"
+                    name="account"
+                    type="text"
+                    required
+                >
+            </div>
+
+            <div>
+                <label for="description">Feedback Description</label>
+                <textarea
+                    id="description"
+                    name="description"
+                    rows="6"
+                    required
+                ></textarea>
+            </div>
+
+            <input
+                type="hidden"
+                th:name="${_csrf.parameterName}"
+                th:value="${_csrf.token}"
+            >
+
+            <button type="submit">Submit Feedback</button>
+        </form>
     </section>
 
     <form th:action="@{/logout}" method="post">
@@ -23,7 +78,7 @@
             type="hidden"
             th:name="${_csrf.parameterName}"
             th:value="${_csrf.token}"
-        />
+        >
         <button type="submit">Log Out</button>
     </form>
 
