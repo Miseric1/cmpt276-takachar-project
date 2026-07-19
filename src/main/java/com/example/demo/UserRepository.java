@@ -6,4 +6,7 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
+
+    // Dashboard analytics: how many customers vs staff exist.
+    long countByRoleIgnoreCase(String role);
 }
