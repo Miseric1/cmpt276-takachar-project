@@ -24,10 +24,10 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * A Knowledge Base article: longer-form documentation such as guides,
- * troubleshooting procedures, and manuals. Richer than an {@link Faq} -- it
- * carries a summary, a long body, an author and contributor list, related
- * articles, and a computed reading time -- while sharing the same category,
+ * A Knowledge Base article: the platform's single self-service content type.
+ * Longer-form documentation such as guides, troubleshooting procedures, and
+ * manuals, carrying a summary, a long body, an author and contributor list,
+ * related articles, and a computed reading time, on top of the shared category,
  * tag, publication, and analytics infrastructure.
  */
 @Entity

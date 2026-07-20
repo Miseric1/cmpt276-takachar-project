@@ -4,7 +4,6 @@ import com.example.demo.dto.PageResponse;
 import com.example.demo.dto.dashboard.ActivityDto;
 import com.example.demo.dto.dashboard.DashboardOverviewDto;
 import com.example.demo.dto.dashboard.DashboardSummaryDto;
-import com.example.demo.dto.dashboard.FaqStatisticsDto;
 import com.example.demo.dto.dashboard.FeedbackStatisticsDto;
 import com.example.demo.dto.dashboard.KnowledgeStatisticsDto;
 import com.example.demo.dto.dashboard.TicketStatisticsDto;
@@ -53,11 +52,6 @@ public class DashboardController {
     @GetMapping("/feedback")
     public FeedbackStatisticsDto getFeedbackStatistics() {
         return dashboardService.getFeedbackStatistics();
-    }
-
-    @GetMapping("/faq")
-    public FaqStatisticsDto getFaqStatistics() {
-        return dashboardService.getFaqStatistics();
     }
 
     @GetMapping("/knowledge")

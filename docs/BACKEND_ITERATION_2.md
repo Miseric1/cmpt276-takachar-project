@@ -1,9 +1,10 @@
 # Iteration 2 Backend — Architecture & Schema
 
 Backend-only iteration for SupportSync (Takachar). It migrates the database to
-Supabase and adds three production-ready modules: **Dashboard**, **FAQ**, and
-**Knowledge Base**. It extends the existing Spring Boot app (`com.example.demo`)
-without changing its architecture, authentication, or the Thymeleaf pages.
+Supabase and adds two production-ready modules: **Dashboard** and **Knowledge
+Base** (the single self-service content type, per the PRD). It extends the
+existing Spring Boot app (`com.example.demo`) without changing its architecture,
+authentication, or the Thymeleaf pages.
 
 ## Stack (unchanged)
 
@@ -31,15 +32,15 @@ Mappers (`mapper/`) translate entities → DTOs inside the service transaction.
 | Package | Contents |
 |---------|----------|
 | `dto` | Shared `ApiError`, `PageResponse`, `Category*`, `Tag*` |
-| `dto.faq` / `dto.knowledge` / `dto.dashboard` | Module DTOs (records) |
+| `dto.knowledge` / `dto.dashboard` | Module DTOs (records) |
 | `exception` | `GlobalExceptionHandler` + `ResourceNotFound/Duplicate/InvalidState` |
-| `mapper` | `FaqMapper`, `KnowledgeMapper` |
-| `model` | `Faq`, `FaqVersion`, `KnowledgeArticle`, `KnowledgeArticleVersion`, `Category`, `Tag`, `PublicationStatus` |
+| `mapper` | `KnowledgeMapper` |
+| `model` | `KnowledgeArticle`, `KnowledgeArticleVersion`, `Category`, `Tag`, `PublicationStatus` |
 | `repository` | Repositories + `*Specifications` for search |
-| `service` | `FaqService`, `KnowledgeService`, `CategoryService`, `TagService`, `DashboardService` |
-| `service.analytics` | `Feedback/Faq/Knowledge` analytics, `ActivityService`, `TicketAnalyticsProvider` (+ empty impl) |
+| `service` | `KnowledgeService`, `CategoryService`, `TagService`, `DashboardService` |
+| `service.analytics` | `Feedback/Knowledge` analytics, `ActivityService`, `TicketAnalyticsProvider` (+ empty impl) |
 | `util` | `TrendUtils` (time-bucketing for charts) |
-| `controller` | `FaqController`, `KnowledgeController`, `CategoryController`, `TagController`, `DashboardController` |
+| `controller` | `KnowledgeController`, `CategoryController`, `TagController`, `DashboardController` |
 
 ## Cross-cutting decisions
 
@@ -58,20 +59,12 @@ Mappers (`mapper/`) translate entities → DTOs inside the service transaction.
 
 ## Data model
 
-Shared vocabulary tables `categories` and `tags` are referenced by both content
-types, so categories/tags are never hardcoded and never duplicated.
+Shared vocabulary tables `categories` and `tags` are referenced by the content
+and are never hardcoded and never duplicated.
 
 ```
 categories (id, name UNIQUE, description, created_at)
 tags       (id, name UNIQUE)
-
-faqs (id, question, answer TEXT, category_id → categories,
-      display_order, status, created_by, last_modified_by,
-      created_at, updated_at, published_at, version,
-      view_count, helpful_count, not_helpful_count)
-faq_tags (faq_id → faqs, tag_id → tags)                 -- M:N
-faq_versions (id, faq_id, version_number, question, answer,
-      category_name, status, edited_by, edited_at)      -- history snapshots
 
 knowledge_articles (id, title, summary, body TEXT, category_id → categories,
       author, status, created_at, updated_at, published_at, version,
@@ -84,9 +77,9 @@ article_versions (id, article_id, version_number, title, summary, body,
       category_name, status, edited_by, edited_at)       -- history snapshots
 ```
 
-Indexes: unique on `categories.name` and `tags.name`; `faqs`/`knowledge_articles`
-indexed on `status`, `category_id`, and `created_at`; version tables indexed on
-their parent id. Schema is created automatically by Hibernate (`ddl-auto=update`).
+Indexes: unique on `categories.name` and `tags.name`; `knowledge_articles`
+indexed on `status`, `category_id`, and `created_at`; the version table indexed
+on its parent id. Schema is created automatically by Hibernate (`ddl-auto=update`).
 
 ## Publication workflow
 
@@ -100,16 +93,16 @@ increments `version`, so history is never overwritten.
 Tickets are not built this iteration. `TicketAnalyticsProvider` is the seam: the
 `EmptyTicketAnalyticsProvider` returns zeroed stats today, and a future ticket
 module supplies a `@Primary` implementation to light up ticket analytics with no
-change to the dashboard API or the frontend. FAQ/Knowledge entities already carry
+change to the dashboard API or the frontend. Knowledge entities already carry
 the fields (ids, view/helpful counts) a ticketing module would reference.
 
 ## Testing
 
-`mvn test` runs 22 tests (JDK 17 or 21): the original feedback suite plus new
-`@SpringBootTest` integration tests for `FaqService`, `KnowledgeService`, and
-`DashboardService` (versioning, publication workflow, search, reading-time,
-related articles, analytics). Tests use an isolated in-memory H2
-(`src/test/resources/application.properties`) and roll back per test.
+`mvn test` runs 24 tests (JDK 17 or 21): the original feedback suite plus new
+`@SpringBootTest` integration tests for `KnowledgeService`, `DashboardService`,
+and API security (versioning, publication workflow, search, reading-time,
+related articles, analytics, and 401/403 authorization). Tests use an isolated
+in-memory H2 (`src/test/resources/application.properties`) and roll back per test.
 
 > Build/test note: the project targets Java 17. The included Docker image builds
 > on Temurin 17. If building locally on a newer JDK, use JDK 17 or 21 (Spring

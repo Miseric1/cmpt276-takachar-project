@@ -3,12 +3,10 @@ package com.example.demo.service;
 import com.example.demo.UserRepository;
 import com.example.demo.dto.dashboard.DashboardOverviewDto;
 import com.example.demo.dto.dashboard.DashboardSummaryDto;
-import com.example.demo.dto.dashboard.FaqStatisticsDto;
 import com.example.demo.dto.dashboard.FeedbackStatisticsDto;
 import com.example.demo.dto.dashboard.KnowledgeStatisticsDto;
 import com.example.demo.dto.dashboard.TicketStatisticsDto;
 import com.example.demo.service.analytics.ActivityService;
-import com.example.demo.service.analytics.FaqAnalyticsService;
 import com.example.demo.service.analytics.FeedbackAnalyticsService;
 import com.example.demo.service.analytics.KnowledgeAnalyticsService;
 import com.example.demo.service.analytics.TicketAnalyticsProvider;
@@ -29,20 +27,17 @@ public class DashboardService {
     private static final String ROLE_CUSTOMER = "CUSTOMER";
 
     private final FeedbackAnalyticsService feedbackAnalytics;
-    private final FaqAnalyticsService faqAnalytics;
     private final KnowledgeAnalyticsService knowledgeAnalytics;
     private final TicketAnalyticsProvider ticketAnalytics;
     private final ActivityService activityService;
     private final UserRepository userRepository;
 
     public DashboardService(FeedbackAnalyticsService feedbackAnalytics,
-                            FaqAnalyticsService faqAnalytics,
                             KnowledgeAnalyticsService knowledgeAnalytics,
                             TicketAnalyticsProvider ticketAnalytics,
                             ActivityService activityService,
                             UserRepository userRepository) {
         this.feedbackAnalytics = feedbackAnalytics;
-        this.faqAnalytics = faqAnalytics;
         this.knowledgeAnalytics = knowledgeAnalytics;
         this.ticketAnalytics = ticketAnalytics;
         this.activityService = activityService;
@@ -59,8 +54,6 @@ public class DashboardService {
                 tickets.overdue(),
                 feedbackAnalytics.total(),
                 feedbackAnalytics.open(),
-                faqAnalytics.total(),
-                faqAnalytics.published(),
                 knowledgeAnalytics.total(),
                 knowledgeAnalytics.published(),
                 knowledgeAnalytics.totalViews(),
@@ -75,7 +68,6 @@ public class DashboardService {
                 getOverview(),
                 ticketAnalytics.getStatistics(),
                 feedbackAnalytics.getStatistics(),
-                faqAnalytics.getStatistics(),
                 knowledgeAnalytics.getStatistics(),
                 activityService.getRecent(15));
     }
@@ -88,11 +80,6 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public FeedbackStatisticsDto getFeedbackStatistics() {
         return feedbackAnalytics.getStatistics();
-    }
-
-    @Transactional(readOnly = true)
-    public FaqStatisticsDto getFaqStatistics() {
-        return faqAnalytics.getStatistics();
     }
 
     @Transactional(readOnly = true)
