@@ -69,4 +69,19 @@ Internal APIs within the Spring Boot backend will handle ticket matching logic a
 
 In addition, the system will integrate the Hugging Face Inference API for sentiment analysis of customer feedback. This API will classify feedback as positive, neutral, or negative, helping administrators prioritize urgent issues and analyze customer satisfaction trends.
 
+---
+
+## Backend Documentation (Iteration 2)
+
+Iteration 2 is a backend-only iteration: it migrates the database to Supabase and
+adds the Dashboard, FAQ, and Knowledge Base backends. Details live in `docs/`:
+
+- [`docs/BACKEND_ITERATION_2.md`](docs/BACKEND_ITERATION_2.md) — architecture, package map, and database schema.
+- [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md) — every new REST endpoint, request/response shapes, auth, pagination, and error format (frontend integration guide).
+- [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md) — Supabase migration, environment variables, and Docker/Render deployment.
+
+The project targets Java 17 (Spring Boot 3.2.5). Run `mvn test` to verify; use
+`SPRING_PROFILES_ACTIVE=prod` with the Supabase env vars to run against Supabase,
+or no profile for local H2.
+
 --- 
