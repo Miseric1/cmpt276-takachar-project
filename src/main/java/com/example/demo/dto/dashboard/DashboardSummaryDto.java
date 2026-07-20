@@ -11,7 +11,6 @@ public record DashboardSummaryDto(
         DashboardOverviewDto overview,
         TicketStatisticsDto tickets,
         FeedbackStatisticsDto feedback,
-        FaqStatisticsDto faq,
         KnowledgeStatisticsDto knowledge,
         List<ActivityDto> recentActivity) {
 }

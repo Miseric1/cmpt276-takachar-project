@@ -2,10 +2,8 @@ package com.example.demo.service.analytics;
 
 import com.example.demo.dto.PageResponse;
 import com.example.demo.dto.dashboard.ActivityDto;
-import com.example.demo.model.Faq;
 import com.example.demo.model.Feedback;
 import com.example.demo.model.KnowledgeArticle;
-import com.example.demo.repository.FaqRepository;
 import com.example.demo.repository.FeedbackRepository;
 import com.example.demo.repository.KnowledgeArticleRepository;
 
@@ -19,22 +17,19 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Builds the recent-activity feed by merging the newest events across feedback,
- * FAQs, and Knowledge articles into a single time-ordered stream. Each source
- * is bounded (top 20) before merging, so the feed stays cheap as data grows.
+ * Builds the recent-activity feed by merging the newest events across feedback
+ * and Knowledge articles into a single time-ordered stream. Each source is
+ * bounded (top 20) before merging, so the feed stays cheap as data grows.
  */
 @Service
 public class ActivityService {
 
     private final FeedbackRepository feedbackRepository;
-    private final FaqRepository faqRepository;
     private final KnowledgeArticleRepository articleRepository;
 
     public ActivityService(FeedbackRepository feedbackRepository,
-                           FaqRepository faqRepository,
                            KnowledgeArticleRepository articleRepository) {
         this.feedbackRepository = feedbackRepository;
-        this.faqRepository = faqRepository;
         this.articleRepository = articleRepository;
     }
 
@@ -68,13 +63,6 @@ public class ActivityService {
             events.add(new ActivityDto("FEEDBACK_SUBMITTED",
                     "New feedback submitted" + (f.getCategory() != null ? " (" + f.getCategory() + ")" : ""),
                     f.getId(), f.getCreatedBy(), f.getCreatedAt()));
-        }
-
-        for (Faq faq : faqRepository.findTop20ByOrderByUpdatedAtDesc()) {
-            boolean created = isSameInstant(faq.getCreatedAt(), faq.getUpdatedAt());
-            events.add(new ActivityDto(created ? "FAQ_CREATED" : "FAQ_UPDATED",
-                    "FAQ \"" + truncate(faq.getQuestion()) + "\" " + (created ? "created" : "updated"),
-                    faq.getId(), faq.getLastModifiedBy(), faq.getUpdatedAt()));
         }
 
         for (KnowledgeArticle a : articleRepository.findTop20ByOrderByUpdatedAtDesc()) {

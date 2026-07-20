@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 /**
  * One entry in the recent-activity feed. {@code type} is a stable machine key
- * (for example FAQ_UPDATED, ARTICLE_PUBLISHED, FEEDBACK_SUBMITTED) the frontend
+ * (for example ARTICLE_CREATED, ARTICLE_UPDATED, FEEDBACK_SUBMITTED) the frontend
  * can map to an icon; {@code message} is a ready-to-display summary.
  */
 public record ActivityDto(

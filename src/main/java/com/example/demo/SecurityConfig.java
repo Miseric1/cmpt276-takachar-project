@@ -41,26 +41,23 @@ public class SecurityConfig {
                 // more specific "/admin" or "/versions" path is not swallowed
                 // by the broader public matcher.
                 .requestMatchers(HttpMethod.GET,
-                        "/api/faqs/admin/**", "/api/faqs/*/versions/**",
                         "/api/knowledge/admin/**", "/api/knowledge/*/versions/**").hasRole("ADMIN")
 
                 // Public engagement (helpful / not-helpful votes).
                 .requestMatchers(HttpMethod.POST,
-                        "/api/faqs/*/helpful", "/api/faqs/*/not-helpful",
                         "/api/knowledge/*/helpful", "/api/knowledge/*/not-helpful").permitAll()
 
-                // Public reads: published FAQ/KB content and the shared vocab.
+                // Public reads: published Knowledge Base content and the shared vocab.
                 .requestMatchers(HttpMethod.GET,
-                        "/api/faqs", "/api/faqs/*",
                         "/api/knowledge", "/api/knowledge/*",
                         "/api/categories", "/api/categories/*",
                         "/api/tags").permitAll()
 
                 // Content and category mutations are staff-only.
-                .requestMatchers(HttpMethod.POST, "/api/faqs", "/api/knowledge", "/api/categories").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/faqs/**", "/api/knowledge/**", "/api/categories/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/faqs/**", "/api/knowledge/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/faqs/**", "/api/knowledge/**", "/api/categories/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/knowledge", "/api/categories").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/knowledge/**", "/api/categories/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/knowledge/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/knowledge/**", "/api/categories/**").hasRole("ADMIN")
 
                 // The staff dashboard analytics are entirely admin-only.
                 .requestMatchers("/api/dashboard/**").hasRole("ADMIN")

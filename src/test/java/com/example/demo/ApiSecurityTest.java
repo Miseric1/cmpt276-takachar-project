@@ -33,16 +33,16 @@ class ApiSecurityTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private String faqJson() throws Exception {
+    private String articleJson() throws Exception {
         return objectMapper.writeValueAsString(Map.of(
-                "question", "Security test question?",
-                "answer", "An answer.",
+                "title", "Security test article",
+                "body", "How to reset your password, step by step.",
                 "category", "General"));
     }
 
     @Test
-    void publicCanListPublishedFaqs() throws Exception {
-        mockMvc.perform(get("/api/faqs")).andExpect(status().isOk());
+    void publicCanListPublishedArticles() throws Exception {
+        mockMvc.perform(get("/api/knowledge")).andExpect(status().isOk());
     }
 
     @Test
@@ -52,28 +52,28 @@ class ApiSecurityTest {
     }
 
     @Test
-    void unauthenticatedFaqCreateReturns401() throws Exception {
-        mockMvc.perform(post("/api/faqs")
+    void unauthenticatedArticleCreateReturns401() throws Exception {
+        mockMvc.perform(post("/api/knowledge")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(faqJson()))
+                        .content(articleJson()))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(roles = "CUSTOMER")
-    void customerFaqCreateReturns403() throws Exception {
-        mockMvc.perform(post("/api/faqs")
+    void customerArticleCreateReturns403() throws Exception {
+        mockMvc.perform(post("/api/knowledge")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(faqJson()))
+                        .content(articleJson()))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void adminCanCreateFaq() throws Exception {
-        mockMvc.perform(post("/api/faqs")
+    void adminCanCreateArticle() throws Exception {
+        mockMvc.perform(post("/api/knowledge")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(faqJson()))
+                        .content(articleJson()))
                 .andExpect(status().isCreated());
     }
 
