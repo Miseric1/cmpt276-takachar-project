@@ -70,6 +70,52 @@
             </form>
         </section>
 
+
+        <!--
+
+            CODE LOGIC TO ALLOW CUSTOMER TO VIEW THEIR OWN PAST FEEDBACK 
+            (add in customer base dashboard)
+        <section class="dashboard-card" style="margin-top: 24px;">
+            <h2>My Feedback</h2>
+        
+            <p class="dashboard-subtext" th:if="${#lists.isEmpty(feedbackList)}">
+                You have not submitted any feedback yet.
+            </p>
+        
+            <div class="table-scroll">
+                <table class="feedback-table" th:unless="${#lists.isEmpty(feedbackList)}">
+                    <thead>
+                        <tr>
+                            <th>Company/Account</th>
+                            <th>Category</th>
+                            <th>Project</th>
+                          
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Submitted At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="feedback : ${feedbackList}">
+                            <td th:text="${feedback.account}">Company</td>
+                            <td th:text="${feedback.category}">Product</td>
+                            <td th:text="${feedback.project}">Project</td>
+                            <td>
+                                <div class="description-clamp" th:text="${feedback.description}">Description</div>
+                            </td>
+                            <td>
+                                <span
+                                    th:text="${feedback.status}"
+                                    th:class="${feedback.status == 'OPEN'} ? 'status-badge status-open' : 'status-badge status-other'"
+                                >OPEN</span>
+                            </td>
+                            <td th:text="${#temporals.format(feedback.createdAt, 'MMMM d, yyyy')}">Date</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        -->
     </div>
 </body>
 </html>

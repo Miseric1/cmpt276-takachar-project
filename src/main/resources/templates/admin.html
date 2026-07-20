@@ -80,7 +80,7 @@
                             >OPEN</span>
                 </td>
                 <td th:text="${feedback.createdBy}">customer@example.com</td>
-                <td th:text="${#temporals.format(feedback.createdAt, 'yyyy-MM-dd HH:mm')}">Date</td>
+                <td th:text="${#temporals.format(feedback.createdAt, 'MMMM d, yyyy')}">Date</td>
             </tr>
             </tbody>
         </table>
