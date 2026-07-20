@@ -24,7 +24,9 @@ public class CustomerController {
             @AuthenticationPrincipal UserDetails userDetails,
             Model model
     ) {
-        model.addAttribute("email", userDetails.getUsername());
+        String email = userDetails.getUsername();
+        model.addAttribute("email", email);
+        model.addAttribute("feedbackList", feedbackService.getByUser(email));
         return "customer";
     }
 
@@ -45,7 +47,8 @@ public class CustomerController {
         );
 
         feedbackService.createFeedback(feedback);
-
         return "redirect:/customer/home?submitted";
     }
+
+
 }

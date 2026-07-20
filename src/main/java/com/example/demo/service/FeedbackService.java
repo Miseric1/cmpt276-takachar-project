@@ -48,4 +48,8 @@ public class FeedbackService {
     public void deleteFeedback(Long id) {
         feedbackRepository.deleteById(id);
     }
+
+    public List<Feedback> getByUser(String username) {
+        return feedbackRepository.findByCreatedBy(username);
+    }
 }
