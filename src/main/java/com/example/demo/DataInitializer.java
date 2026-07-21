@@ -7,6 +7,7 @@ import com.example.demo.model.User;
 import com.example.demo.service.KnowledgeService;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.PageRequest;
@@ -15,6 +16,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+/**
+ * {@code seedFaqArticles} below is gated by the {@code app.seed-demo-data}
+ * property (see {@code @ConditionalOnProperty}) rather than a Spring profile,
+ * because no test in this project activates a "test" profile — a
+ * {@code @Profile("!test")} guard would silently never trigger. Setting
+ * {@code app.seed-demo-data=false} in src/test/resources/application.properties
+ * disables it for every test in the suite, with no changes needed to
+ * individual test classes. Without this, the 18 seeded articles leak into
+ * whatever database a test's Spring context uses, making keyword/category
+ * search assertions (e.g. "first result" or "duplicate title") match
+ * unexpected extra articles.
+ *
+ * {@code createAdmin} is intentionally left unguarded — there's no evidence
+ * it causes test failures, and disabling it risks silently breaking some
+ * other test that depends on the seeded admin user existing.
+ */
 
 @Configuration
 public class DataInitializer {
@@ -43,6 +61,7 @@ public class DataInitializer {
      * of them from the FAQ page exactly like one they created themselves.
      */
     @Bean
+    @ConditionalOnProperty(name = "app.seed-demo-data", havingValue = "true", matchIfMissing = true)
     public CommandLineRunner seedFaqArticles(KnowledgeService knowledgeService) {
         return args -> {
             // Check per-article rather than "does anything exist" — otherwise a

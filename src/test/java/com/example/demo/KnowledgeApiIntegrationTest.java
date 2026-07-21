@@ -45,6 +45,7 @@ class KnowledgeApiIntegrationTest {
                 "status", status));
     }
 
+    
     @Test
     @WithMockUser(roles = "ADMIN")
     void fullArticleLifecycleThroughTheApi() throws Exception {
