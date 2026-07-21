@@ -2,7 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.dto.dashboard.DashboardOverviewDto;
 import com.example.demo.dto.dashboard.DashboardSummaryDto;
-import com.example.demo.dto.faq.FaqRequest;
+import com.example.demo.dto.knowledge.KnowledgeRequest;
 import com.example.demo.model.PublicationStatus;
 
 import org.junit.jupiter.api.Test;
@@ -26,17 +26,18 @@ class DashboardServiceTest {
     private DashboardService dashboardService;
 
     @Autowired
-    private FaqService faqService;
+    private KnowledgeService knowledgeService;
 
     @Test
     void overviewReflectsPublishedContent() {
-        long before = dashboardService.getOverview().publishedFaqs();
+        long before = dashboardService.getOverview().publishedArticles();
 
-        faqService.create(new FaqRequest("Dashboard sample question?", "An answer.", "General",
-                Set.of("sample"), 0, PublicationStatus.PUBLISHED), "admin@test.com");
+        knowledgeService.create(new KnowledgeRequest("Dashboard sample article", "A summary.",
+                "Some body content.", "General", Set.of("sample"), null, "admin@test.com",
+                PublicationStatus.PUBLISHED), "admin@test.com");
 
         DashboardOverviewDto overview = dashboardService.getOverview();
-        assertThat(overview.publishedFaqs()).isEqualTo(before + 1);
+        assertThat(overview.publishedArticles()).isEqualTo(before + 1);
         assertThat(overview.totalStaff()).isGreaterThanOrEqualTo(1); // seeded admin
     }
 
@@ -47,7 +48,6 @@ class DashboardServiceTest {
         assertThat(summary.tickets()).isNotNull();
         assertThat(summary.tickets().total()).isZero();
         assertThat(summary.feedback()).isNotNull();
-        assertThat(summary.faq()).isNotNull();
         assertThat(summary.knowledge()).isNotNull();
         assertThat(summary.recentActivity()).isNotNull();
     }

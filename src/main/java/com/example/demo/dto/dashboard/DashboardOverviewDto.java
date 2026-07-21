@@ -12,9 +12,7 @@ public record DashboardOverviewDto(
         // Feedback
         long totalFeedback,
         long openFeedback,
-        // Content
-        long totalFaqs,
-        long publishedFaqs,
+        // Knowledge Base content
         long totalArticles,
         long publishedArticles,
         long knowledgeBaseViews,

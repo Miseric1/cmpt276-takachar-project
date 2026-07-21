@@ -1,4 +1,4 @@
-# API Reference — Iteration 2 (Dashboard, FAQ, Knowledge Base)
+# API Reference — Iteration 2 (Dashboard, Knowledge Base)
 
 All endpoints added in Iteration 2 are JSON REST APIs under `/api`. This
 reference is written so the frontend can integrate without reading backend code.
@@ -40,8 +40,8 @@ reference is written so the frontend can integrate without reading backend code.
   "status": 400,
   "error": "Bad Request",
   "message": "Validation failed for one or more fields.",
-  "path": "/api/faqs",
-  "fieldErrors": [ { "field": "question", "message": "Question is required" } ]
+  "path": "/api/knowledge",
+  "fieldErrors": [ { "field": "title", "message": "Title is required" } ]
 }
 ```
 Status codes used: `400` validation/bad input, `401` unauthenticated, `403`
@@ -49,52 +49,10 @@ forbidden, `404` not found, `409` duplicate/invalid state, `500` unexpected.
 
 ---
 
-## FAQ — `/api/faqs`
-
-### Public
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/faqs` | Paginated list/search of **published** FAQs |
-| GET | `/api/faqs/{id}` | Published FAQ detail (increments view count) |
-| POST | `/api/faqs/{id}/helpful` | Register a "helpful" vote → `204` |
-| POST | `/api/faqs/{id}/not-helpful` | Register a "not helpful" vote → `204` |
-
-Query params for `GET /api/faqs`: `keyword` (matches question/answer),
-`category` (name), `tag` (name), plus pagination. Default sort `displayOrder`.
-
-### Admin (`ADMIN` role)
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/faqs/admin` | Search across **all** statuses; extra `status` filter |
-| GET | `/api/faqs/admin/{id}` | Detail for any status (no view increment) |
-| GET | `/api/faqs/{id}/versions` | Full version history (newest first) |
-| GET | `/api/faqs/{id}/versions/{n}` | A single historical revision |
-| POST | `/api/faqs` | Create an FAQ → `201` with `FaqResponse` |
-| PUT | `/api/faqs/{id}` | Update (snapshots prior version, bumps version) |
-| PATCH | `/api/faqs/{id}/status?status=PUBLISHED` | Change publication status |
-| DELETE | `/api/faqs/{id}` | Delete → `204` |
-
-**`FaqRequest` (create/update body):**
-```json
-{
-  "question": "How do I reset my password?",
-  "answer": "Open the account page and choose Reset Password.",
-  "category": "Accounts",
-  "tags": ["password", "login"],
-  "displayOrder": 1,
-  "status": "PUBLISHED"
-}
-```
-`question`, `answer`, `category` are required. `category` is resolved by name and
-created if it does not exist. `status` optional (defaults to `DRAFT`).
-
-**`FaqResponse`:** `id, question, answer, category {id,name,description}, tags[],
-displayOrder, status, createdBy, lastModifiedBy, createdAt, updatedAt,
-publishedAt, version, viewCount, helpfulCount, notHelpfulCount`.
-
----
-
 ## Knowledge Base — `/api/knowledge`
+
+This is the platform's single self-service content type (FAQ-style short answers
+and longer guides both live here as articles).
 
 ### Public
 | Method | Path | Description |
@@ -136,9 +94,10 @@ Query params for `GET /api/knowledge`: `keyword` (matches title/summary/body),
 computed server-side from the body (≈200 words/minute) and never accepted from
 the client. `relatedArticleIds` self/unknown ids are ignored.
 
-**`KnowledgeResponse`:** adds `summary, body, relatedArticles[{id,title}],
-author, contributors[], estimatedReadingTimeMinutes` to the same analytics/audit
-fields as FAQ.
+**`KnowledgeResponse`:** `id, title, summary, body, category {id,name,description},
+tags[], relatedArticles[{id,title}], author, contributors[], status, createdAt,
+updatedAt, publishedAt, version, estimatedReadingTimeMinutes, viewCount,
+helpfulCount, notHelpfulCount, lastModifiedBy`.
 
 ---
 
@@ -166,13 +125,12 @@ write API.
 | GET | `/api/dashboard/overview` | System-wide summary cards only |
 | GET | `/api/dashboard/tickets` | Ticket statistics (zeroed until Ticketing ships) |
 | GET | `/api/dashboard/feedback` | Feedback statistics + submissions trend chart |
-| GET | `/api/dashboard/faq` | FAQ statistics + popularity leaderboards |
 | GET | `/api/dashboard/knowledge` | Knowledge statistics + leaderboards |
 | GET | `/api/dashboard/activity` | Paginated recent-activity feed |
 
 All numbers are computed by the backend; chart series are returned ready to plot
 (`{ key, label, points: [{ label, value }] }`). `overview` fields include ticket
-counts, feedback totals, FAQ/article counts, knowledge views, and customer/staff
+counts, feedback totals, article counts, knowledge views, and customer/staff
 counts. See `dto/dashboard/*` for exact field lists.
 
 ---

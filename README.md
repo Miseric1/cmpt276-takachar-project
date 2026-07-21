@@ -74,7 +74,8 @@ In addition, the system will integrate the Hugging Face Inference API for sentim
 ## Backend Documentation (Iteration 2)
 
 Iteration 2 is a backend-only iteration: it migrates the database to Supabase and
-adds the Dashboard, FAQ, and Knowledge Base backends. Details live in `docs/`:
+adds the Dashboard and Knowledge Base backends. (Self-service content is a single
+type — Knowledge Base articles — per the PRD.) Details live in `docs/`:
 
 - [`docs/BACKEND_ITERATION_2.md`](docs/BACKEND_ITERATION_2.md) — architecture, package map, and database schema.
 - [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md) — every new REST endpoint, request/response shapes, auth, pagination, and error format (frontend integration guide).
