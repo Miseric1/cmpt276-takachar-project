@@ -38,6 +38,10 @@ public interface KnowledgeArticleRepository
 
     List<KnowledgeArticle> findTop20ByOrderByUpdatedAtDesc();
 
+    /** Articles that list the given id in their own relatedArticles collection. */
+    @Query("select a from KnowledgeArticle a join a.relatedArticles r where r.id = :id")
+    List<KnowledgeArticle> findByRelatedArticlesId(@Param("id") Long id);
+
     @Query("select coalesce(sum(a.viewCount), 0) from KnowledgeArticle a")
     long sumViewCount();
 

@@ -181,10 +181,18 @@ public class KnowledgeService {
     @Transactional
     public void delete(Long id) {
         KnowledgeArticle article = findEntity(id);
-        // Detach from any article that lists this one as related, to satisfy the
-        // join-table foreign keys before removal.
+        // Detach this article's own outgoing related-article links.
         article.getRelatedArticles().clear();
         articleRepository.save(article);
+
+        // The relation is unidirectional, so other articles that list this one as
+        // related are unaware of the deletion -- detach their incoming links too,
+        // or they would be left pointing at a now-nonexistent id.
+        for (KnowledgeArticle referencing : articleRepository.findByRelatedArticlesId(id)) {
+            referencing.getRelatedArticles().removeIf(related -> related.getId().equals(id));
+            articleRepository.save(referencing);
+        }
+
         articleRepository.delete(article);
         log.info("Article {} deleted", id);
     }
