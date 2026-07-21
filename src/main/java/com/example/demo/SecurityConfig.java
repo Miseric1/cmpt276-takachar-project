@@ -64,7 +64,7 @@ public class SecurityConfig {
 
                 // --- Existing catch-all rules (unchanged) ------------------
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/customer/**").hasRole("CUSTOMER")
+                .requestMatchers("/customer/**").hasAnyRole("CUSTOMER", "ADMIN")
                 .anyRequest().authenticated()
             )
             // REST clients authenticate with the shared session but cannot send
