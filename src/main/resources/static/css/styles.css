@@ -941,10 +941,6 @@ body.admin-dashboard-body {
     color: #1f6a96;
 }
 
-.faq-category-icon {
-    font-size: 19px;
-}
-
 .faq-category-title {
     font-size: 14px;
     font-weight: 700;
@@ -973,13 +969,22 @@ body.admin-dashboard-body {
     background: #ffffff;
 }
 
+.faq-item-header {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.faq-item.is-open .faq-item-header {
+    background: #fafbfb;
+}
+
 .faq-question {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    width: 100%;
-    padding: 16px 20px;
+    flex: 1;
+    min-width: 0;
+    padding: 16px 12px 16px 20px;
     border: none;
     background: none;
     font-family: inherit;
@@ -990,12 +995,78 @@ body.admin-dashboard-body {
     cursor: pointer;
 }
 
-.faq-item.is-open .faq-question {
-    background: #fafbfb;
+.faq-question span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.faq-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+    padding-right: 8px;
+}
+
+.faq-item-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid #e3e6e9;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #7c858e;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.faq-item-action:hover {
+    background: #f1f3f5;
+    color: #20252b;
+    border-color: #d9dde1;
+}
+
+.faq-item-action--delete:hover {
+    background: #fff0f0;
+    color: #c0392b;
+    border-color: #efcccc;
+}
+
+.faq-status-badge {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+    flex: 0 0 auto;
+}
+
+.faq-status-published {
+    background: #edf8ef;
+    color: #1e8449;
+}
+
+.faq-status-draft {
+    background: #f1f3f5;
+    color: #7c858e;
+}
+
+.faq-status-other {
+    background: #fff8dc;
+    color: #91720d;
 }
 
 .faq-chevron {
     flex: 0 0 auto;
+    padding-right: 20px;
     font-size: 18px;
     color: #7c858e;
     transition: transform 0.2s ease;
@@ -1109,5 +1180,133 @@ body.admin-dashboard-body {
 
     .faq-question {
         font-size: 14px;
+    }
+}
+
+/* ===== FAQ: dynamic states, category monogram, admin controls, modal ===== */
+
+.faq-loading,
+.faq-load-error {
+    padding: 40px 20px;
+    text-align: center;
+    color: #7c858e;
+    font-size: 14px;
+}
+
+.faq-load-error {
+    color: #c0392b;
+}
+
+/* Admin-only "Add Article" button placement next to the article count */
+.faq-panel-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Add/Edit Article modal */
+.faq-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 72px 20px 40px;
+    background: rgba(20, 24, 28, 0.45);
+    overflow-y: auto;
+}
+
+.faq-modal-overlay[hidden] {
+    display: none;
+}
+
+.faq-modal {
+    width: 100%;
+    max-width: 560px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.faq-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #eceef0;
+}
+
+.faq-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #20252b;
+}
+
+.faq-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 7px;
+    background: none;
+    color: #7c858e;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.faq-modal-close:hover {
+    background: #f1f3f5;
+    color: #20252b;
+}
+
+.faq-modal-form {
+    padding: 22px 24px 24px;
+}
+
+.faq-modal-error {
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: #fdecea;
+    color: #c0392b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.faq-modal-error[hidden] {
+    display: none;
+}
+
+.faq-modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+.faq-modal-actions-right {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}
+
+@media (max-width: 640px) {
+    .faq-modal-overlay {
+        padding: 40px 12px;
+    }
+
+    .faq-modal-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .faq-modal-actions-right {
+        margin-left: 0;
+        justify-content: flex-end;
     }
 }
