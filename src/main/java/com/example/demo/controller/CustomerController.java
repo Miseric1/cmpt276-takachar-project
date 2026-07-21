@@ -50,5 +50,9 @@ public class CustomerController {
         return "redirect:/customer/home?submitted";
     }
 
+    @GetMapping("/customer/faq")
+    public String customerFaq(Model model) {
+        return "customer-faq";
+    }
 
 }
