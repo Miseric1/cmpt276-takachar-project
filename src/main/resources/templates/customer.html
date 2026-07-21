@@ -1,294 +1,101 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Customer Dashboard | Takachar</title>
-
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 
 <body class="admin-dashboard-body">
-
 <div class="admin-layout">
 
-    <!-- Customer sidebar -->
     <aside class="admin-sidebar">
-
         <div class="admin-brand">
             <div class="admin-brand-icon">T</div>
             <span>Takachar</span>
         </div>
 
         <nav class="admin-nav">
-
-            <a
-                    class="admin-nav-link admin-nav-link--active"
-                    th:href="@{/customer/home}"
-            >
+            <a class="admin-nav-link admin-nav-link--active" th:href="@{/customer/home}">
                 <span class="admin-nav-icon">▦</span>
                 Dashboard
             </a>
-
-            <a
-                    class="admin-nav-link"
-                    href="#submit-feedback"
-            >
+            <a class="admin-nav-link" th:href="@{/customer/feedback}">
                 <span class="admin-nav-icon">▤</span>
                 Submit feedback
             </a>
-
             <a class="admin-nav-link" th:href="@{/customer/faq}">
                 <span class="admin-nav-icon">▣</span>
-                FAQ &amp; knowledge base
+                FAQ &amp; Knowledge Base
             </a>
-
-
         </nav>
 
         <div class="admin-sidebar-bottom">
-
             <div class="admin-nav-link">
                 <span class="admin-nav-icon">◉</span>
                 Customer account
             </div>
-
         </div>
-
     </aside>
 
-    <!-- Main customer content -->
     <main class="admin-main">
 
         <header class="admin-header">
-
             <div>
                 <p class="admin-header-label">Customer workspace</p>
                 <h1>Dashboard</h1>
             </div>
 
             <div class="admin-profile">
-
                 <div class="admin-profile-details">
-                    <strong th:text="${email}">
-                        customer@example.com
-                    </strong>
-
+                    <strong th:text="${email}">customer@example.com</strong>
                     <span>Customer</span>
                 </div>
-
                 <form th:action="@{/logout}" method="post">
-
-                    <input
-                            type="hidden"
-                            th:name="${_csrf.parameterName}"
-                            th:value="${_csrf.token}"
-                    >
-
-                    <button
-                            type="submit"
-                            class="admin-logout-button"
-                    >
-                        Log out
-                    </button>
-
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="admin-logout-button">Log out</button>
                 </form>
-
             </div>
-
         </header>
-
-        <!-- Success notification -->
-        <div
-                class="alert alert-success"
-                th:if="${param.submitted}"
-        >
-            Feedback submitted successfully.
-        </div>
 
         <!-- Welcome panel -->
         <section class="admin-panel">
-
             <div class="admin-panel-header">
-
                 <div>
                     <h2>Welcome to Takachar Support</h2>
-
                     <p>
-                        Submit product feedback, report technical concerns,
-                        or share suggestions with the Takachar team.
+                        Track the status of everything you have submitted, or
+                        <a th:href="@{/customer/feedback}">submit new feedback</a>.
                     </p>
                 </div>
-
             </div>
-
         </section>
 
-        <!-- Feedback submission form -->
-        <section
-                class="admin-panel"
-                id="submit-feedback"
-        >
-
-            <div class="admin-panel-header">
-
-                <div>
-                    <h2>Submit feedback</h2>
-
-                    <p>
-                        Let us know what is working, what is not, or what
-                        you would like to see next.
-                    </p>
-                </div>
-
-            </div>
-
-            <form
-                    th:action="@{/customer/feedback}"
-                    method="post"
-            >
-
-                <input
-                        type="hidden"
-                        th:name="${_csrf.parameterName}"
-                        th:value="${_csrf.token}"
-                >
-
-                <div class="form-group">
-
-                    <label for="category">
-                        Category
-                    </label>
-
-                    <select
-                            id="category"
-                            name="category"
-                            required
-                    >
-                        <option value="">
-                            Select a category
-                        </option>
-
-                        <option value="PRODUCT">
-                            Product
-                        </option>
-
-                        <option value="TECHNICAL">
-                            Technical issue
-                        </option>
-
-                        <option value="SERVICE">
-                            Customer service
-                        </option>
-
-                        <option value="OTHER">
-                            Other
-                        </option>
-                    </select>
-
-                </div>
-
-                <div class="form-row">
-
-                    <div class="form-group">
-
-                        <label for="project">
-                            Project
-                        </label>
-
-                        <input
-                                id="project"
-                                name="project"
-                                type="text"
-                                placeholder="Enter the project name"
-                                required
-                        >
-
-                    </div>
-
-                    <div class="form-group">
-
-                        <label for="account">
-                            Company or account
-                        </label>
-
-                        <input
-                                id="account"
-                                name="account"
-                                type="text"
-                                placeholder="Enter your company or account"
-                                required
-                        >
-
-                    </div>
-
-                </div>
-
-                <div class="form-group">
-
-                    <label for="description">
-                        Feedback description
-                    </label>
-
-                    <textarea
-                            id="description"
-                            name="description"
-                            rows="6"
-                            placeholder="Describe the issue or feedback in detail..."
-                            required
-                    ></textarea>
-
-                </div>
-
-                <button
-                        type="submit"
-                        class="btn btn-primary"
-                >
-                    Submit feedback
-                </button>
-
-            </form>
-
-        </section>
-
-        <!--
-            Future customer feedback history section.
-
-            Uncomment this after feedbackList is added to the
-            CustomerController model.
-
+        <!-- Submission history -->
         <section class="admin-panel" id="my-feedback">
 
             <div class="admin-panel-header">
-
                 <div>
-                    <h2>My feedback</h2>
-                    <p>Review your previous feedback submissions.</p>
+                    <h2>My submissions</h2>
+                    <p>Every ticket and piece of feedback you have submitted, and where it currently stands.</p>
                 </div>
-
             </div>
 
-            <p
-                    class="admin-empty-message"
-                    th:if="${#lists.isEmpty(feedbackList)}"
-            >
+            <p class="admin-empty-message" th:if="${#lists.isEmpty(feedbackList)}">
                 You have not submitted any feedback yet.
             </p>
 
-            <div
-                    class="admin-table-wrapper"
-                    th:unless="${#lists.isEmpty(feedbackList)}"
-            >
+            <div class="admin-table-wrapper" th:unless="${#lists.isEmpty(feedbackList)}">
 
                 <table class="admin-feedback-table">
 
                     <thead>
                     <tr>
-                        <th>Account</th>
+                        <th>Reference</th>
                         <th>Category</th>
                         <th>Project</th>
+                        <th>Account</th>
                         <th>Description</th>
                         <th>Status</th>
                         <th>Submitted at</th>
@@ -296,20 +103,15 @@
                     </thead>
 
                     <tbody>
-
                     <tr th:each="feedback : ${feedbackList}">
 
-                        <td th:text="${feedback.account}">
-                            Company
-                        </td>
+                        <td th:text="'#' + ${feedback.id}">#1</td>
 
-                        <td th:text="${feedback.category}">
-                            Product
-                        </td>
+                        <td th:text="${feedback.category}">Product</td>
 
-                        <td th:text="${feedback.project}">
-                            Project
-                        </td>
+                        <td th:text="${feedback.project}">Project</td>
+
+                        <td th:text="${feedback.account}">Company</td>
 
                         <td>
                             <div
@@ -324,24 +126,16 @@
                             <span
                                     th:text="${feedback.status}"
                                     th:class="${feedback.status == 'OPEN'}
-                                    ? 'admin-status-badge admin-status-open'
-                                    : 'admin-status-badge admin-status-other'"
-                            >
-                                OPEN
-                            </span>
+                                        ? 'admin-status-badge admin-status-open'
+                                        : 'admin-status-badge admin-status-other'"
+                            >OPEN</span>
                         </td>
 
-                        <td
-                                th:text="${#temporals.format(
-                                feedback.createdAt,
-                                'MMMM d, yyyy'
-                                )}"
-                        >
+                        <td th:text="${#temporals.format(feedback.createdAt, 'MMMM d, yyyy')}">
                             Date
                         </td>
 
                     </tr>
-
                     </tbody>
 
                 </table>
@@ -349,11 +143,8 @@
             </div>
 
         </section>
-        -->
 
     </main>
-
 </div>
-
 </body>
 </html>
