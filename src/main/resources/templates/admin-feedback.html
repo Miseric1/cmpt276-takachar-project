@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Takachar Admin Dashboard</title>
+    <title>Feedback Tracker | Takachar</title>
 
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
@@ -13,7 +13,6 @@
 
 <div class="admin-layout">
 
-    <!-- Left sidebar -->
     <aside class="admin-sidebar">
 
         <div class="admin-brand">
@@ -23,13 +22,13 @@
 
         <nav class="admin-nav">
 
-            <a class="admin-nav-link admin-nav-link--active"
-               th:href="@{/admin/home}">
+            <a class="admin-nav-link" th:href="@{/admin/home}">
                 <span class="admin-nav-icon">▦</span>
                 Dashboard
             </a>
 
-            <a class="admin-nav-link" th:href="@{/admin/feedback}">
+            <a class="admin-nav-link admin-nav-link--active"
+               th:href="@{/admin/feedback}">
                 <span class="admin-nav-icon">▤</span>
                 Feedback tracker
             </a>
@@ -47,22 +46,23 @@
         </nav>
 
         <div class="admin-sidebar-bottom">
+
             <a class="admin-nav-link" th:href="@{/customer/home}">
                 <span class="admin-nav-icon">⇆</span>
                 View as customer
             </a>
+
         </div>
 
     </aside>
 
-    <!-- Main dashboard -->
     <main class="admin-main">
 
         <header class="admin-header">
 
             <div>
                 <p class="admin-header-label">Admin workspace</p>
-                <h1>Overview</h1>
+                <h1>Feedback tracker</h1>
             </div>
 
             <div class="admin-profile">
@@ -90,8 +90,7 @@
 
         </header>
 
-        <!-- Summary cards -->
-        <section class="admin-summary-grid">
+        <section class="admin-summary-grid admin-summary-grid--two">
 
             <article class="admin-summary-card">
                 <p>Total feedback</p>
@@ -113,65 +112,55 @@
                 <span>Requires attention</span>
             </article>
 
-            <article class="admin-summary-card admin-summary-card--red">
-                <p>Overdue tickets</p>
-
-                <strong>0</strong>
-
-                <span>Ticket system coming soon</span>
-            </article>
-
-            <article class="admin-summary-card admin-summary-card--green">
-                <p>Resolved tickets</p>
-
-                <strong>0</strong>
-
-                <span>Ticket system coming soon</span>
-            </article>
-
         </section>
 
-        <!-- Quick ticket preview -->
         <section class="admin-panel">
-
-            <div class="admin-panel-header">
-                <div>
-                    <h2>Support tickets</h2>
-                    <p>A quick view of active customer support cases.</p>
-                </div>
-
-            <a class="admin-secondary-button" th:href="@{/admin/tickets}">
-                View all tickets
-            </a>
-            </div>
-
-            <div class="admin-empty-state">
-                <div class="admin-empty-icon">▱</div>
-
-                <div>
-                    <h3>No support tickets yet</h3>
-                    <p>
-                        Ticket information will appear here once the support-ticket
-                        workflow is connected.
-                    </p>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- Existing feedback functionality -->
-        <section class="admin-panel" id="feedback-section">
 
             <div class="admin-panel-header">
 
                 <div>
                     <h2>Customer feedback</h2>
-                    <p>Review all feedback currently submitted by customers.</p>
+                    <p>
+                        Search, filter, and review submissions from customers.
+                    </p>
                 </div>
 
                 <div class="admin-feedback-count">
                     <span th:text="${totalFeedback}">0</span>
                     entries
+                </div>
+
+            </div>
+
+            <div class="admin-filter-bar">
+
+                <div class="admin-search-field">
+                    <label for="feedback-search">Search feedback</label>
+
+                    <input
+                            id="feedback-search"
+                            type="search"
+                            placeholder="Search project, account, description..."
+                    >
+                </div>
+
+                <div class="admin-filter-field">
+                    <label for="status-filter">Status</label>
+
+                    <select id="status-filter">
+                        <option value="">All statuses</option>
+                        <option value="OPEN">Open</option>
+                        <option value="CLOSED">Closed</option>
+                        <option value="RESOLVED">Resolved</option>
+                    </select>
+                </div>
+
+                <div class="admin-filter-field">
+                    <label for="category-filter">Category</label>
+
+                    <select id="category-filter">
+                        <option value="">All categories</option>
+                    </select>
                 </div>
 
             </div>
@@ -188,7 +177,10 @@
                     th:unless="${#lists.isEmpty(feedbackList)}"
             >
 
-                <table class="admin-feedback-table">
+                <table
+                        class="admin-feedback-table"
+                        id="feedback-table"
+                >
 
                     <thead>
                     <tr>
@@ -205,7 +197,13 @@
 
                     <tbody>
 
-                    <tr th:each="feedback : ${feedbackList}">
+                    <tr
+                            th:each="feedback : ${feedbackList}"
+                            th:attr="
+                            data-status=${feedback.status},
+                            data-category=${feedback.category}
+                            "
+                    >
 
                         <td th:text="${feedback.id}">
                             1
@@ -264,11 +262,90 @@
 
             </div>
 
+            <p
+                    class="admin-empty-message"
+                    id="feedback-filter-empty"
+                    hidden
+            >
+                No feedback matches the selected filters.
+            </p>
+
         </section>
 
     </main>
 
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("feedback-search");
+        const statusFilter = document.getElementById("status-filter");
+        const categoryFilter = document.getElementById("category-filter");
+        const table = document.getElementById("feedback-table");
+        const emptyMessage = document.getElementById("feedback-filter-empty");
+
+        if (!table) {
+            return;
+        }
+
+        const rows = Array.from(table.querySelectorAll("tbody tr"));
+
+        const categories = [
+            ...new Set(
+                rows
+                    .map(row => row.dataset.category)
+                    .filter(category => category)
+            )
+        ].sort();
+
+        categories.forEach(category => {
+            const option = document.createElement("option");
+            option.value = category;
+            option.textContent = category;
+            categoryFilter.appendChild(option);
+        });
+
+        function filterRows() {
+            const searchValue = searchInput.value.trim().toLowerCase();
+            const selectedStatus = statusFilter.value.toLowerCase();
+            const selectedCategory = categoryFilter.value.toLowerCase();
+
+            let visibleRows = 0;
+
+            rows.forEach(row => {
+                const rowText = row.textContent.toLowerCase();
+                const rowStatus = (row.dataset.status || "").toLowerCase();
+                const rowCategory = (row.dataset.category || "").toLowerCase();
+
+                const matchesSearch =
+                    !searchValue || rowText.includes(searchValue);
+
+                const matchesStatus =
+                    !selectedStatus || rowStatus === selectedStatus;
+
+                const matchesCategory =
+                    !selectedCategory || rowCategory === selectedCategory;
+
+                const isVisible =
+                    matchesSearch &&
+                    matchesStatus &&
+                    matchesCategory;
+
+                row.hidden = !isVisible;
+
+                if (isVisible) {
+                    visibleRows++;
+                }
+            });
+
+            emptyMessage.hidden = visibleRows !== 0;
+        }
+
+        searchInput.addEventListener("input", filterRows);
+        statusFilter.addEventListener("change", filterRows);
+        categoryFilter.addEventListener("change", filterRows);
+    });
+</script>
 
 </body>
 </html>

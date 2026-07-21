@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ | Takachar</title>
+
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+
+<body class="admin-dashboard-body">
+
+<div class="admin-layout">
+
+    <aside class="admin-sidebar">
+
+        <div class="admin-brand">
+            <div class="admin-brand-icon">T</div>
+            <span>Takachar</span>
+        </div>
+
+        <nav class="admin-nav">
+
+            <a class="admin-nav-link" th:href="@{/admin/home}">
+                <span class="admin-nav-icon">▦</span>
+                Dashboard
+            </a>
+
+            <a class="admin-nav-link" th:href="@{/admin/feedback}">
+                <span class="admin-nav-icon">▤</span>
+                Feedback tracker
+            </a>
+
+            <a class="admin-nav-link admin-nav-link--active" th:href="@{/admin/faq}">
+                <span class="admin-nav-icon">▣</span>
+                FAQ &amp; knowledge base
+            </a>
+
+            <a class="admin-nav-link" th:href="@{/admin/tickets}">
+                <span class="admin-nav-icon">▱</span>
+                Support tickets
+            </a>
+
+        </nav>
+
+        <div class="admin-sidebar-bottom">
+            <a class="admin-nav-link" th:href="@{/customer/home}">
+                <span class="admin-nav-icon">⇆</span>
+                View as customer
+            </a>
+        </div>
+
+    </aside>
+
+    <main class="admin-main">
+
+        <header class="admin-header">
+
+            <div>
+                <p class="admin-header-label">Admin workspace</p>
+                <h1>FAQ &amp; Knowledge Base</h1>
+            </div>
+
+            <div class="admin-profile">
+
+                <div class="admin-profile-details">
+                    <strong th:text="${email}">admin@example.com</strong>
+                    <span>Administrator</span>
+                </div>
+
+                <form th:action="@{/logout}" method="post">
+
+                    <input
+                        type="hidden"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}"
+                    >
+
+                    <button type="submit" class="admin-logout-button">
+                        Log out
+                    </button>
+
+                </form>
+
+            </div>
+
+        </header>
+
+        <section class="admin-panel">
+
+            <div class="admin-empty-state">
+
+                <div class="admin-empty-icon">▣</div>
+
+                <div>
+                    <h3>FAQ page coming soon</h3>
+
+                    <p>
+                        This page is reserved for the FAQ and Knowledge Base.
+                        The full implementation will be added in a future update.
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>
