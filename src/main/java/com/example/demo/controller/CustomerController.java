@@ -30,6 +30,15 @@ public class CustomerController {
         return "customer";
     }
 
+    @GetMapping("/customer/feedback")
+    public String feedbackPage(
+            @AuthenticationPrincipal UserDetails userDetails,
+            Model model
+    ) {
+        model.addAttribute("email", userDetails.getUsername());
+        return "customer-feedback";
+    }
+
     @PostMapping("/customer/feedback")
     public String submitFeedback(
             @RequestParam String category,
@@ -47,11 +56,15 @@ public class CustomerController {
         );
 
         feedbackService.createFeedback(feedback);
-        return "redirect:/customer/home?submitted";
+        return "redirect:/customer/feedback?submitted";
     }
 
     @GetMapping("/customer/faq")
-    public String customerFaq(Model model) {
+    public String customerFaq(
+            @AuthenticationPrincipal UserDetails userDetails,
+            Model model
+    ) {
+        model.addAttribute("email", userDetails.getUsername());
         return "customer-faq";
     }
 
