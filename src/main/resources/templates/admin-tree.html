@@ -30,7 +30,7 @@
                 Feedback tracker
             </a>
 
-            <a class="admin-nav-link admin-nav-link--active" th:href="@{/admin/faq}">
+            <a class="admin-nav-link admin-nav-link" th:href="@{/admin/faq}">
                 <span class="admin-nav-icon">▣</span>
                 FAQ &amp; knowledge base
             </a>
@@ -40,7 +40,7 @@
                 Support tickets
             </a>
             
-            <a class="admin-nav-link" th:href="@{/admin/tree}">
+            <a class="admin-nav-link admin-nav-link--active" th:href="@{/admin/tree}">
                 <span class="admin-nav-icon">▱</span>
                 Diagnostic Tree
             </a>
@@ -61,7 +61,7 @@
 
             <div>
                 <p class="admin-header-label">Admin workspace</p>
-                <h1>FAQ &amp; Knowledge Base</h1>
+                <h1>Diagnostic Tree</h1>
             </div>
 
             <div class="admin-profile">
@@ -89,60 +89,24 @@
 
         </header>
 
-        <!-- Search + Category filters -->
-        <section class="admin-panel faq-search-panel">
-            <div class="faq-search-bar">
-                <span class="faq-search-icon">⌕</span>
-                <input
-                    type="search"
-                    id="faqSearchInput"
-                    class="faq-search-input"
-                    placeholder="Search the knowledge base (e.g. &quot;pickup schedule&quot;, &quot;error code&quot;, &quot;payment&quot;)"
-                    autocomplete="off"
-                />
-            </div>
-
-            <div class="faq-category-grid" id="faqCategoryGrid" hidden></div>
-        </section>
-
-        <!-- Accordion -->
+        
         <section class="admin-panel">
             <div class="admin-panel-header">
                 <div>
-                    <h2>Frequently Asked Questions</h2>
-                    <p>Answers to the most common questions from Takachar customers.</p>
+                    <h2>Complaint Categories</h2>
+                    <p>Manage complaint categories and diagnostic questions to identify customer issues.</p>
+                    <!-- 
+                        categories. 
+                        then go to questions
+                        then resoltuion. 
+                    -->
                 </div>
-                <div class="faq-panel-header-actions">
-                    <span class="admin-feedback-count" id="faqVisibleCount">0 articles</span>
-                    <button type="button" class="btn btn-primary btn-inline" id="faqAddButton">+ Add Article</button>
-                </div>
+                
             </div>
-
-            <div class="faq-loading" id="faqLoadingState">Loading knowledge base…</div>
-            <div class="faq-load-error" id="faqLoadError" hidden>
-                Couldn't load the knowledge base right now. Please refresh the page to try again.
-            </div>
-
-            <div class="faq-accordion" id="faqAccordion" hidden></div>
-
-            <!-- Shown when search/category filters match nothing -->
-            <div class="faq-no-results" id="faqNoResults" hidden>
-                <div class="admin-empty-icon">⌕</div>
-                <div>
-                    <h3>No articles match your search</h3>
-                    <p>Try a different keyword, or point the customer to a support ticket if they need direct help.</p>
-                </div>
-            </div>
+        
         </section>
 
-        <!-- Escalation CTA (admin variant) -->
-        <section class="faq-cta">
-            <div class="faq-cta-text">
-                <h3>Doesn't cover the customer's issue?</h3>
-                <p>Jump into support tickets to escalate or follow up directly with the customer.</p>
-            </div>
-            <a th:href="@{/admin/tickets}" class="btn btn-primary btn-inline faq-cta-button">View support tickets</a>
-        </section>
+      
 
     </main>
 
