@@ -450,6 +450,19 @@ body.admin-dashboard-body {
     font-weight: 700;
 }
 
+/* Logo variant of the sidebar brand (customer pages) — swaps the T-icon +
+   text combo for the actual Takachar wordmark, scaled to fit the sidebar. */
+.admin-brand--logo {
+    padding-bottom: 24px;
+}
+
+.admin-brand-image {
+    height: 30px;
+    width: auto;
+    max-width: 100%;
+    display: block;
+}
+
 .admin-nav {
     display: flex;
     flex-direction: column;

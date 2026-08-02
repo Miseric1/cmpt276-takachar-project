@@ -34,7 +34,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> auth
                 // --- Existing page + asset rules (unchanged) ---------------
-                .requestMatchers("/", "/register", "/login", "/css/**", "/js/**").permitAll()
+                .requestMatchers("/", "/register", "/login", "/css/**", "/js/**", "/images/**").permitAll()
 
                 // --- New REST API rules ------------------------------------
                 // Admin-only reads must come before the public GET rules so a
