@@ -19,6 +19,7 @@
     let editMode    = false;
     let currentId   = null;
     let navHistory  = [];     // stack of node IDs visited
+    let clickedOptions = [];  // option labels selected along the active path
     let faqArticles = [];
     let diagnosticSession = null;
     let createdTicket = null;
@@ -161,6 +162,9 @@
     async function go(nextId, optionId) {
         if (!nextId) { toast('This option is unlinked — connect it in Edit mode'); return; }
 
+        const selectedOption = cur()?.options?.find(option =>
+            String(option.id) === String(optionId));
+
         if (IS_CUSTOMER && diagnosticSession?.id) {
             try {
                 const res = await fetch(`${API}/diagnostics/sessions/${diagnosticSession.id}/answers`, {
@@ -177,6 +181,7 @@
             }
         }
         navHistory.push(currentId);
+        if (selectedOption?.label) clickedOptions.push(selectedOption.label);
         currentId = diagnosticSession?.currentQuestion?.id ?? nextId;
         render();
     }
@@ -188,6 +193,7 @@
         }
         if (!navHistory.length) return;
         currentId = navHistory.pop();
+        clickedOptions.pop();
         render();
     }
     
@@ -245,6 +251,7 @@
         };
         opt.nextId = newId;
         navHistory.push(currentId);
+        clickedOptions.push(opt.label);
         currentId = newId;
         render();
         toast('Question added — edit the text above');
@@ -266,6 +273,7 @@
         };
         opt.nextId = newId;
         navHistory.push(currentId);
+        clickedOptions.push(opt.label);
         currentId = newId;
         render();
         toast('Resolution added — edit the text above');
@@ -310,9 +318,11 @@
     
         if (navHistory.length) {
             currentId = navHistory.pop();
+            clickedOptions.pop();
         } else {
             currentId  = T().rootId;
             navHistory = [];
+            clickedOptions = [];
         }
         render();
     }
@@ -327,6 +337,7 @@
             savedTree     = clone(result);
             currentId     = workingTree.rootId;
             navHistory    = [];
+            clickedOptions = [];
             toast('Changes saved ✓');
         } catch (e) {
             toast('Save failed — see console');
@@ -340,6 +351,7 @@
         workingTree = clone(savedTree);
         currentId   = workingTree ? workingTree.rootId : null;
         navHistory  = [];
+        clickedOptions = [];
         render();
         toast('Changes discarded');
     }
@@ -348,6 +360,7 @@
         diagnosticSession = await startDiagnosticSession();
         createdTicket = null;
         navHistory = [];
+        clickedOptions = [];
         currentId = diagnosticSession?.currentQuestion?.id ?? T().rootId;
         render();
     }
@@ -404,18 +417,7 @@
     }
     
     function renderTopBar() {
-        const parts = ['Start'];
-    
-        [...navHistory, currentId].forEach(id => {
-            const n = N(id);
-            if (!n) return;
-    
-            const label = n.type === 'resolution'
-                ? 'Resolution'
-                : n.text;
-    
-            parts.push(label);
-        });
+        const parts = ['Start', ...clickedOptions];
     
         const bcHtml = parts.map((p, i) =>
             i < parts.length - 1
@@ -478,14 +480,15 @@
             </div>` : `
             <div class="dt-ticket-section">
                 <div class="dt-ticket-content">
+                    <div class="dt-ticket-icon">⚠️</div>
                     <div class="dt-ticket-copy">
-                        <strong>Still having trouble?</strong>
+                        <strong>Issue not resolved?</strong>
                         <span>If this solution didn't resolve your issue, our support team can help.</span>
                     </div>
                 </div>
 
                 <button class="dt-ticket-btn" onclick="DT.createTicket()">
-                    + New Ticket
+                    Raise a Ticket
                 </button>
             </div>
         `) : '';
@@ -513,9 +516,9 @@
                     </div>
                 ` : ''}
 
-                ${ticketBtn}
                 ${editBar}
-            </div>`;
+            </div>
+            ${ticketBtn}`;
     }
     
     function renderQuestion(area, n) {
