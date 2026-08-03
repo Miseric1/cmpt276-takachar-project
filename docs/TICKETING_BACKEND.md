@@ -18,6 +18,11 @@ It is API-only; the existing admin feedback UI is unchanged.
 7. Admins assign and progress the ticket. Customers can view only their own
    tickets and close a ticket only after it is resolved.
 
+The customer diagnostic page now starts the persisted session automatically,
+records each UUID option selection, shows the FAQ linked by the admin editor,
+and creates a ticket with the complete diagnostic trail when the suggested
+resolution does not work.
+
 Manual ticket creation is also supported. For customers, `customerEmail` is
 always derived from the authenticated session. An admin may provide
 `customerEmail` when logging a ticket on a customer's behalf.
@@ -35,6 +40,9 @@ Historical question text and selected answer labels are snapshotted into
 An active session stores its current node UUID without a foreign key, allowing
 the admin editor's full-replace save operation to remain authoritative. Ticket
 rows use optimistic locking.
+
+The same JPA entities run on local H2 for development and Supabase PostgreSQL
+when `SPRING_PROFILES_ACTIVE=prod`; no tree-specific datasource is used.
 
 ## Status workflow
 

@@ -1,9 +1,14 @@
 package com.example.demo.service;
 
+import com.example.demo.exception.InvalidStateException;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.model.DiagnosticNode;
 import com.example.demo.model.DiagnosticOption;
+import com.example.demo.model.KnowledgeArticle;
+import com.example.demo.model.PublicationStatus;
 import com.example.demo.repository.DiagnosticNodeRepository;
 import com.example.demo.repository.DiagnosticOptionRepository;
+import com.example.demo.repository.KnowledgeArticleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +22,7 @@ public class DiagnosticTreeService {
 
     private final DiagnosticNodeRepository nodeRepo;
     private final DiagnosticOptionRepository optionRepo;
+    private final KnowledgeArticleRepository articleRepo;
 
     // ── DTOs ─────────────────────────────────────────────────────────────────
 
@@ -29,6 +35,7 @@ public class DiagnosticTreeService {
         String type,
         String text,
         boolean isRoot,
+        Long knowledgeArticleId,
         List<OptionDTO> options
     ) {}
 
@@ -42,7 +49,8 @@ public class DiagnosticTreeService {
     public record OptionRequest(UUID id, String label, UUID nextId) {}
 
     /** Inbound: one node sent by the frontend on save. */
-    public record NodeRequest(String type, String text,   Long knowledgeArticleId, List<OptionRequest> options) {}
+    public record NodeRequest(String type, String text, Long knowledgeArticleId,
+                              List<OptionRequest> options) {}
 
     /**
      * Inbound: full save payload.
@@ -76,6 +84,7 @@ public class DiagnosticTreeService {
                 n.getType(),
                 n.getText(),
                 n.isRoot(),
+                n.getKnowledgeArticleId(),
                 n.getOptions().stream()
                     .map(o -> new OptionDTO(o.getId(), o.getLabel(), o.getDestinationNodeId()))
                     .toList()
@@ -126,10 +135,21 @@ public class DiagnosticTreeService {
                 .type(nodeReq.type())
                 .text(nodeReq.text())
                 .root(isRoot)
+                .knowledgeArticleId(resolveArticleId(nodeReq.knowledgeArticleId()))
                 .options(opts)
                 .build());
         });
 
         return getTree();
+    }
+
+    private Long resolveArticleId(Long id) {
+        if (id == null) return null;
+        KnowledgeArticle article = articleRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Article", id));
+        if (article.getStatus() != PublicationStatus.PUBLISHED) {
+            throw new InvalidStateException("Diagnostic resolutions can reference only published FAQ articles.");
+        }
+        return article.getId();
     }
 }

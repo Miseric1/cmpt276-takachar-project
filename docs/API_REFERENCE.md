@@ -148,6 +148,18 @@ Question options route to another question or a terminal `resolution` node.
 Tree replacement does not delete session history because active sessions store
 the current node UUID without a database foreign key.
 
+Resolution nodes accept an optional `knowledgeArticleId`. The referenced FAQ
+must exist and be published; the value is persisted and returned in the tree:
+
+```json
+{
+  "type": "resolution",
+  "text": "Restart the unit and confirm the indicator returns to green.",
+  "knowledgeArticleId": 12,
+  "options": []
+}
+```
+
 ## Guided diagnostic sessions — `/api/diagnostics`
 
 All diagnostic endpoints require a signed-in session. Session access is limited

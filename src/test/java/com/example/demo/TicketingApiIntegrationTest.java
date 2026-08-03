@@ -22,6 +22,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
 
@@ -167,6 +168,7 @@ class TicketingApiIntegrationTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void primaryTreeCanBeReplacedWhileDiagnosticSessionIsActive() throws Exception {
         UUID rootId = UUID.randomUUID();
         UUID optionId = UUID.randomUUID();
@@ -199,6 +201,43 @@ class TicketingApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.currentQuestion.id").value(rootId.toString()))
                 .andExpect(jsonPath("$.currentQuestion.text").value("Which component is affected right now?"));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    void adminCanLinkPublishedFaqToResolutionAndSessionReceivesIt() throws Exception {
+        KnowledgeResponse article = knowledgeService.create(new KnowledgeRequest(
+                "Linked diagnostic FAQ", "Linked FAQ summary", "Follow the linked diagnostic instructions.",
+                "Troubleshooting", Set.of("diagnostic"), Set.of(), "admin@test.com", PublicationStatus.PUBLISHED),
+                "admin@test.com");
+        UUID rootId = UUID.randomUUID();
+        UUID optionId = UUID.randomUUID();
+        UUID resolutionId = UUID.randomUUID();
+        String payload = treePayload(rootId, optionId, resolutionId,
+                "Which component needs help?", article.id());
+
+        mockMvc.perform(put("/api/tree")
+                        .with(user("admin@test.com").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nodes['" + resolutionId + "'].knowledgeArticleId")
+                        .value(article.id()));
+
+        String sessionBody = mockMvc.perform(post("/api/diagnostics/sessions")
+                        .with(user(CUSTOMER).roles("CUSTOMER")))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String sessionId = objectMapper.readTree(sessionBody).path("id").asText();
+
+        mockMvc.perform(post("/api/diagnostics/sessions/{id}/answers", sessionId)
+                        .with(user(CUSTOMER).roles("CUSTOMER"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"questionId\":\"" + rootId + "\",\"optionId\":\"" + optionId + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SOLUTION_SUGGESTED"))
+                .andExpect(jsonPath("$.suggestedArticle.id").value(article.id()));
     }
 
     @Test
@@ -273,6 +312,12 @@ class TicketingApiIntegrationTest {
     }
 
     private String treePayload(UUID rootId, UUID optionId, UUID resolutionId, String question) {
+        return treePayload(rootId, optionId, resolutionId, question, null);
+    }
+
+    private String treePayload(UUID rootId, UUID optionId, UUID resolutionId,
+                               String question, Long knowledgeArticleId) {
+        String articleJson = knowledgeArticleId == null ? "null" : knowledgeArticleId.toString();
         return """
                 {
                   "rootId":"%s",
@@ -280,10 +325,11 @@ class TicketingApiIntegrationTest {
                     "%s":{"type":"question","text":"%s","options":[
                       {"id":"%s","label":"Power system","nextId":"%s"}
                     ]},
-                    "%s":{"type":"resolution","text":"Restart the unit.","options":[]}
+                    "%s":{"type":"resolution","text":"Restart the unit.",
+                           "knowledgeArticleId":%s,"options":[]}
                   }
                 }
-                """.formatted(rootId, rootId, question, optionId, resolutionId, resolutionId);
+                """.formatted(rootId, rootId, question, optionId, resolutionId, resolutionId, articleJson);
     }
 
 }
