@@ -575,7 +575,6 @@
                     </div>
                 </div>`;
             }
-
     
             // Preview mode
             return `
@@ -639,7 +638,7 @@
                     onclick="DT.saveChanges()">Save changes</button>
             ` : ''}`;
     }
-    
+  
     // ── Edit toggle ───────────────────────────────────────────────
     const editBtn = document.getElementById('dtEditBtn');
 
