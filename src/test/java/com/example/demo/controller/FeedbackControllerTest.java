@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.Feedback;
+import com.example.demo.model.SubmissionType;
 import com.example.demo.service.FeedbackService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -37,12 +39,28 @@ class FeedbackControllerTest {
     void shouldGetAllFeedback() throws Exception {
         Feedback f1 = new Feedback("Cat1", "Proj1", "Acc1", "Desc1", "User1");
         f1.setId(1L);
-        when(feedbackService.getAllFeedback()).thenReturn(Arrays.asList(f1));
+        when(feedbackService.search(null, "createdAt", Sort.Direction.DESC)).thenReturn(Arrays.asList(f1));
 
         mockMvc.perform(get("/api/feedback"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].description").value("Desc1"));
+    }
+
+    @Test
+    void shouldFilterComplaintsAndSortByType() throws Exception {
+        Feedback complaint = new Feedback("Service", "Proj1", "Acc1", "Missed pickup", "User1",
+                SubmissionType.COMPLAINT);
+        complaint.setId(2L);
+        when(feedbackService.search(SubmissionType.COMPLAINT, "type", Sort.Direction.ASC))
+                .thenReturn(Arrays.asList(complaint));
+
+        mockMvc.perform(get("/api/feedback")
+                        .param("type", "COMPLAINT")
+                        .param("sortBy", "type")
+                        .param("direction", "ASC"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].type").value("COMPLAINT"));
     }
 
     @Test

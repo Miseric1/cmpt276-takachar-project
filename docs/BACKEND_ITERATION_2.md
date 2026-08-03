@@ -9,7 +9,7 @@ authentication, or the Thymeleaf pages.
 ## Stack (unchanged)
 
 Java 17 · Spring Boot 3.2.5 · Spring Data JPA · Spring Security · PostgreSQL
-(Supabase in prod, H2 in dev/test) · Docker · Render.
+(Supabase by default, H2 only in the explicit local profile and tests) · Docker · Render.
 
 ## Layering
 

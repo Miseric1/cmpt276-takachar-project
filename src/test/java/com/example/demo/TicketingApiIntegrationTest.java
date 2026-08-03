@@ -26,6 +26,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.List;
 import java.util.UUID;
@@ -98,6 +100,59 @@ class TicketingApiIntegrationTest {
 
         assertThat(dashboardService.getTicketStatistics().total()).isEqualTo(before + 1);
         assertThat(dashboardService.getTicketStatistics().closed()).isGreaterThanOrEqualTo(1);
+    }
+
+    @Test
+    void prioritySetsSlaOrdersQueueAndReprioritisationUpdatesTarget() throws Exception {
+        JsonNode low = createTicketWithPriority(CUSTOMER, "Low priority question", null, "LOW");
+        JsonNode medium = createTicketWithPriority(CUSTOMER, "Medium priority issue", null, "MEDIUM");
+        JsonNode high = createTicketWithPriority(CUSTOMER, "High priority outage", null, "HIGH");
+        JsonNode urgent = createTicketWithPriority(CUSTOMER, "Urgent safety issue", null, "URGENT");
+
+        assertSlaBusinessDays(urgent, 1);
+        assertSlaBusinessDays(high, 2);
+        assertSlaBusinessDays(medium, 3);
+        assertSlaBusinessDays(low, 5);
+
+        mockMvc.perform(get("/api/tickets")
+                        .with(user("admin@test.com").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].priority").value("URGENT"))
+                .andExpect(jsonPath("$.content[1].priority").value("HIGH"))
+                .andExpect(jsonPath("$.content[2].priority").value("MEDIUM"))
+                .andExpect(jsonPath("$.content[3].priority").value("LOW"));
+
+        LocalDateTime originalLowTarget = LocalDateTime.parse(low.path("targetResolutionAt").asText());
+        String reprioritisedBody = mockMvc.perform(patch("/api/tickets/{id}/assignment", low.path("id").asLong())
+                        .with(user("admin@test.com").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"priority\":\"HIGH\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.priority").value("HIGH"))
+                .andExpect(jsonPath("$.timeline[?(@.type == 'TARGET_DATE_CHANGED')]").exists())
+                .andReturn().getResponse().getContentAsString();
+
+        JsonNode reprioritised = objectMapper.readTree(reprioritisedBody);
+        LocalDateTime newTarget = LocalDateTime.parse(reprioritised.path("targetResolutionAt").asText());
+        assertThat(newTarget).isBefore(originalLowTarget);
+        assertNearBusinessDayTarget(LocalDateTime.now(), newTarget, 2);
+    }
+
+    @Test
+    void criticalAndOutageLanguageAutomaticallyPromotesPriority() throws Exception {
+        JsonNode critical = createTicketWithPriority(
+                CUSTOMER, "Visible smoke near the reactor vent", null, "LOW");
+        JsonNode outage = createTicketWithPriority(
+                CUSTOMER, "Production unit is offline", null, "LOW");
+        JsonNode firewall = createTicketWithPriority(
+                CUSTOMER, "Firewall configuration question", null, "LOW");
+
+        assertThat(critical.path("priority").asText()).isEqualTo("URGENT");
+        assertSlaBusinessDays(critical, 1);
+        assertThat(outage.path("priority").asText()).isEqualTo("HIGH");
+        assertSlaBusinessDays(outage, 2);
+        assertThat(firewall.path("priority").asText()).isEqualTo("LOW");
+        assertSlaBusinessDays(firewall, 5);
     }
 
     @Test
@@ -298,17 +353,42 @@ class TicketingApiIntegrationTest {
     }
 
     private JsonNode createTicket(String customer, String subject, String diagnosticSessionId) throws Exception {
+        return createTicketWithPriority(customer, subject, diagnosticSessionId, "MEDIUM");
+    }
+
+    private JsonNode createTicketWithPriority(String customer, String subject,
+                                              String diagnosticSessionId, String priority) throws Exception {
         String diagnostic = diagnosticSessionId == null ? "null" : "\"" + diagnosticSessionId + "\"";
         String response = mockMvc.perform(post("/api/tickets")
                         .with(user(customer).roles("CUSTOMER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"subject":"%s","description":"Detailed issue description","project":"Pilot A",
-                                 "priority":"MEDIUM","diagnosticSessionId":%s}
-                                """.formatted(subject, diagnostic)))
+                                 "priority":"%s","diagnosticSessionId":%s}
+                                """.formatted(subject, priority, diagnostic)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response);
+    }
+
+    private void assertSlaBusinessDays(JsonNode ticket, int expectedBusinessDays) {
+        LocalDateTime created = LocalDateTime.parse(ticket.path("createdAt").asText());
+        LocalDateTime target = LocalDateTime.parse(ticket.path("targetResolutionAt").asText());
+        assertNearBusinessDayTarget(created, target, expectedBusinessDays);
+    }
+
+    private void assertNearBusinessDayTarget(LocalDateTime start, LocalDateTime target,
+                                             int expectedBusinessDays) {
+        LocalDateTime expected = start;
+        int remaining = expectedBusinessDays;
+        while (remaining > 0) {
+            expected = expected.plusDays(1);
+            switch (expected.getDayOfWeek()) {
+                case SATURDAY, SUNDAY -> { }
+                default -> remaining--;
+            }
+        }
+        assertThat(Duration.between(expected, target).abs()).isLessThanOrEqualTo(Duration.ofSeconds(5));
     }
 
     private String treePayload(UUID rootId, UUID optionId, UUID resolutionId, String question) {

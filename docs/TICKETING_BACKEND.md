@@ -41,8 +41,9 @@ An active session stores its current node UUID without a foreign key, allowing
 the admin editor's full-replace save operation to remain authoritative. Ticket
 rows use optimistic locking.
 
-The same JPA entities run on local H2 for development and Supabase PostgreSQL
-when `SPRING_PROFILES_ACTIVE=prod`; no tree-specific datasource is used.
+The same JPA entities use Supabase PostgreSQL during normal application startup.
+H2 is isolated to the explicit `local` profile and the automated test suite; no
+tree-specific datasource is used.
 
 ## Status workflow
 
@@ -60,6 +61,37 @@ Timeline health is derived by the API:
 - `YELLOW`: open and still inside its target window
 - `RED`: overdue, or resolved after its target date
 
+## Priority triage and SLA targets
+
+New tickets receive an automatic target based on priority. The admin queue is
+ordered by the nearest target first, so the most time-sensitive work is seen
+before lower-impact work:
+
+| Priority | Default target |
+|----------|----------------|
+| `URGENT` | 1 business day |
+| `HIGH` | 2 business days |
+| `MEDIUM` | 3 business days |
+| `LOW` | 5 business days |
+
+Business days are Monday through Friday. Weekends are skipped; statutory and
+company holidays are not excluded unless a holiday-calendar integration is
+added later.
+
+Changing a ticket's priority recalculates its target from the time of
+reprioritisation. An explicit admin-supplied target still takes precedence.
+Urgent and high-priority SPOC notification subjects are visibly flagged.
+
+The backend also promotes tickets automatically when their subject or
+description contains clear safety/emergency signals (for example fire, smoke,
+injury, overheating, or a gas leak) or serious outage signals (for example an
+offline system, production stoppage, or data loss). Automatic triage can raise
+a submitted priority but never lower it.
+
+Override the defaults with `TICKET_SLA_URGENT_BUSINESS_DAYS`,
+`TICKET_SLA_HIGH_BUSINESS_DAYS`, `TICKET_SLA_MEDIUM_BUSINESS_DAYS`, and
+`TICKET_SLA_LOW_BUSINESS_DAYS`.
+
 ## Attachments
 
 `POST /api/tickets/{id}/attachments` accepts multipart field `file` for
@@ -75,24 +107,38 @@ can replace local disk without changing the API or ticket service.
 ## Email notifications
 
 Notifications are transaction-aware: email is attempted only after ticket data
-commits, and an SMTP outage never rolls back a ticket. Events cover creation,
+commits, and a provider outage never rolls back a ticket. Events cover creation,
 SPOC notification, assignment, status changes, and resolution.
 
-Email is disabled by default and logged locally. To enable SMTP:
+Email is logged locally by default. Resend is the production provider. Either
+set the values in the deployment environment or copy
+`application-secrets.properties.example` to the ignored
+`application-secrets.properties` file and paste the generated key there:
 
 ```text
-EMAIL_NOTIFICATIONS_ENABLED=true
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USERNAME=...
-SMTP_PASSWORD=...
-SMTP_AUTH=true
-SMTP_STARTTLS=true
-NOTIFICATION_FROM=support@takachar.com
+app.notifications.provider=resend
+app.notifications.resend.api-key=re_...
+app.notifications.from=Takachar Support <onboarding@resend.dev>
 ```
 
+The equivalent environment variables are `EMAIL_PROVIDER=resend`,
+`RESEND_API_KEY`, and `NOTIFICATION_FROM`. A verified Takachar sending domain
+should replace `onboarding@resend.dev` before emailing real customers. SMTP is
+still available by selecting `EMAIL_PROVIDER=smtp` and supplying the existing
+`SMTP_*` settings.
+
 `TICKET_DEFAULT_SPOC_EMAIL` supplies a fallback when a create request does not
-include a SPOC. `TICKET_TARGET_HOURS` controls the default target (72 hours).
+include a SPOC.
+
+## Complaints and SPOC-created accounts
+
+Feedback and complaints share the `feedback` table and are distinguished by
+the `type` field (`FEEDBACK` or `COMPLAINT`). Admins can filter and sort the
+combined list with `GET /api/feedback?type=COMPLAINT&sortBy=type&direction=ASC`.
+
+Public registration is disabled. The administrator acting as SPOC creates and
+lists customer accounts through `/api/admin/customers`; passwords are BCrypt
+hashed and never returned by the API.
 
 ## Hugging Face sentiment
 

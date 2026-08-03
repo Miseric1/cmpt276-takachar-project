@@ -203,6 +203,14 @@ resolution node, `suggestedArticle`. The status is one of `IN_PROGRESS`, `SOLUTI
 
 List filters: `keyword`, `status`, `priority`, `project`, `department`, `spoc`,
 `createdFrom`, `createdTo`, plus standard pagination and sorting.
+The default queue order is `targetResolutionAt,asc`, which places tickets with
+the nearest SLA target first. New targets are calculated from priority:
+`URGENT` 1 business day, `HIGH` 2 business days, `MEDIUM` 3 business days,
+and `LOW` 5 business days. Business days are Monday-Friday; weekends are
+skipped, but statutory and company holidays require a separate calendar.
+Safety/emergency wording is automatically promoted to `URGENT`, while clear
+service-outage wording is promoted to `HIGH`. Automatic triage never lowers a
+priority supplied by the caller.
 
 Create request:
 
@@ -227,12 +235,35 @@ Ticket status values are `OPEN`, `IN_PROGRESS`, `WAITING_FOR_CUSTOMER`,
 
 ## Feedback sentiment
 
-Feedback responses now include `sentiment`, `sentimentConfidence`,
+Feedback and complaints share the same record. The `type` field is `FEEDBACK`
+by default or `COMPLAINT`. Admins can filter and sort the unified list:
+
+```text
+GET /api/feedback?type=COMPLAINT&sortBy=type&direction=ASC
+```
+
+Supported sort fields are `type`, `status`, `category`, `project`, `account`,
+`createdAt`, and `updatedAt`. Listing, updating, and deleting submissions are
+admin-only; authenticated customers may create them.
+
+Responses also include `sentiment`, `sentimentConfidence`,
 `sentimentModel`, and `sentimentAnalyzedAt`. New feedback is analysed on
 submission. Admins can retry with `POST /api/feedback/{id}/sentiment`.
 
-## Existing page endpoints (unchanged)
+## Customer accounts — `/api/admin/customers`
 
-`/api/feedback` (CRUD) and the Thymeleaf pages (`/`, `/login`, `/register`,
-`/admin/home`, `/customer/home`, `/customer/feedback`) are untouched by this
-iteration.
+Public registration is disabled. An administrator acting as the SPOC manages
+customer credentials:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/admin/customers` | Create a customer from `{email,password}` → `201` |
+| GET | `/api/admin/customers` | List customer accounts without password data |
+
+Passwords must be 8–72 characters, are stored as BCrypt hashes, and are never
+returned. Duplicate emails return `409`.
+
+## Existing page endpoints
+
+The Thymeleaf pages `/`, `/login`, `/admin/home`, `/customer/home`, and
+`/customer/feedback` remain available. `/register` is intentionally disabled.

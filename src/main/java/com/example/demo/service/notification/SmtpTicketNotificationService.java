@@ -7,7 +7,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 @Service
-@ConditionalOnProperty(name = "app.notifications.email.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "app.notifications.provider", havingValue = "smtp")
 public class SmtpTicketNotificationService implements TicketNotificationService {
     private final JavaMailSender mailSender;
     private final String from;

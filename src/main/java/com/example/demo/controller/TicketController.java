@@ -61,7 +61,8 @@ public class TicketController {
             @RequestParam(required = false) String spoc,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdTo,
-            @PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+            @PageableDefault(size = 20, sort = "targetResolutionAt",
+                    direction = org.springframework.data.domain.Sort.Direction.ASC)
             Pageable pageable,
             Authentication auth) {
         return ticketService.search(keyword, status, priority, project, department, spoc,

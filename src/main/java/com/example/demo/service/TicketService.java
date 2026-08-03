@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -44,20 +45,20 @@ public class TicketService {
     private final KnowledgeArticleRepository articleRepository;
     private final DiagnosticService diagnosticService;
     private final ApplicationEventPublisher eventPublisher;
-    private final long targetResolutionHours;
+    private final TicketTriagePolicy triagePolicy;
     private final String defaultSpocEmail;
 
     public TicketService(SupportTicketRepository ticketRepository,
                          KnowledgeArticleRepository articleRepository,
                          DiagnosticService diagnosticService,
                          ApplicationEventPublisher eventPublisher,
-                         @Value("${app.ticketing.target-resolution-hours:72}") long targetResolutionHours,
+                         TicketTriagePolicy triagePolicy,
                          @Value("${app.ticketing.default-spoc-email:}") String defaultSpocEmail) {
         this.ticketRepository = ticketRepository;
         this.articleRepository = articleRepository;
         this.diagnosticService = diagnosticService;
         this.eventPublisher = eventPublisher;
-        this.targetResolutionHours = targetResolutionHours;
+        this.triagePolicy = triagePolicy;
         this.defaultSpocEmail = defaultSpocEmail == null ? "" : defaultSpocEmail.trim();
     }
 
@@ -70,9 +71,11 @@ public class TicketService {
         ticket.setCustomerEmail(admin && request.customerEmail() != null && !request.customerEmail().isBlank()
                 ? request.customerEmail().trim() : actor);
         ticket.setProject(request.project().trim());
-        ticket.setPriority(request.priority() == null ? TicketPriority.MEDIUM : request.priority());
+        TicketPriority priority = triagePolicy.triage(
+                request.priority(), request.subject(), request.description());
+        ticket.setPriority(priority);
         ticket.setSpocEmail(firstNonBlank(request.spocEmail(), defaultSpocEmail));
-        ticket.setTargetResolutionAt(LocalDateTime.now().plusHours(Math.max(1, targetResolutionHours)));
+        ticket.setTargetResolutionAt(triagePolicy.targetFrom(LocalDateTime.now(), priority));
 
         DiagnosticSession diagnostic = null;
         if (request.diagnosticSessionId() != null) {
@@ -118,19 +121,25 @@ public class TicketService {
     @Transactional
     public TicketResponse assign(Long id, TicketAssignmentRequest request, String actor) {
         SupportTicket ticket = find(id);
-        String oldTarget = String.valueOf(ticket.getTargetResolutionAt());
+        LocalDateTime oldTarget = ticket.getTargetResolutionAt();
+        TicketPriority oldPriority = ticket.getPriority();
         ticket.setDepartment(trimToNull(request.department()));
         ticket.setAssigneeEmail(trimToNull(request.assigneeEmail()));
         if (request.spocEmail() != null) ticket.setSpocEmail(trimToNull(request.spocEmail()));
-        if (request.priority() != null) ticket.setPriority(request.priority());
-        if (request.targetResolutionAt() != null) ticket.setTargetResolutionAt(request.targetResolutionAt());
+        if (request.priority() != null && request.priority() != oldPriority) {
+            ticket.setPriority(request.priority());
+            ticket.setTargetResolutionAt(triagePolicy.targetFrom(LocalDateTime.now(), request.priority()));
+        }
+        if (request.targetResolutionAt() != null) {
+            ticket.setTargetResolutionAt(request.targetResolutionAt());
+        }
         touchFirstResponse(ticket);
 
         addEvent(ticket, TicketEventType.ASSIGNED, actor,
                 "Assigned to " + valueOrUnassigned(ticket.getDepartment())
                         + (ticket.getAssigneeEmail() == null ? "" : " (" + ticket.getAssigneeEmail() + ")"),
                 null, null);
-        if (request.targetResolutionAt() != null && !oldTarget.equals(String.valueOf(ticket.getTargetResolutionAt()))) {
+        if (!Objects.equals(oldTarget, ticket.getTargetResolutionAt())) {
             addEvent(ticket, TicketEventType.TARGET_DATE_CHANGED, actor,
                     "Target resolution date changed from " + oldTarget + " to " + ticket.getTargetResolutionAt(),
                     null, null);
@@ -253,11 +262,15 @@ public class TicketService {
 
     private void publishCreated(SupportTicket ticket) {
         String trail = diagnosticTrail(ticket.getDiagnosticSession());
+        String prefix = triagePolicy.isExpedited(ticket.getPriority())
+                ? "[" + ticket.getPriority() + "] " : "";
         publish(ticket.getCustomerEmail(), "Support ticket created: " + ticket.getReferenceNumber(),
                 "We received your ticket " + ticket.getReferenceNumber() + ".\nTarget resolution: "
                         + ticket.getTargetResolutionAt() + "\n\n" + ticket.getSubject());
-        publish(ticket.getSpocEmail(), "New support ticket: " + ticket.getReferenceNumber(),
-                ticket.getSubject() + "\nCustomer: " + ticket.getCustomerEmail() + "\nProject: "
+        publish(ticket.getSpocEmail(), prefix + "New support ticket: " + ticket.getReferenceNumber(),
+                "Priority: " + ticket.getPriority() + "\nTarget resolution: "
+                        + ticket.getTargetResolutionAt() + "\n\n" + ticket.getSubject()
+                        + "\nCustomer: " + ticket.getCustomerEmail() + "\nProject: "
                         + ticket.getProject() + "\n\n" + ticket.getDescription() + trail);
     }
 

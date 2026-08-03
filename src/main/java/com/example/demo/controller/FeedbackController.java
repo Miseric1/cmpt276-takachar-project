@@ -1,10 +1,12 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.Feedback;
+import com.example.demo.model.SubmissionType;
 import com.example.demo.service.FeedbackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,8 +24,11 @@ public class FeedbackController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Feedback>> getAllFeedback() {
-        List<Feedback> feedbackList = feedbackService.getAllFeedback();
+    public ResponseEntity<List<Feedback>> getAllFeedback(
+            @RequestParam(required = false) SubmissionType type,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+        List<Feedback> feedbackList = feedbackService.search(type, sortBy, direction);
         return new ResponseEntity<>(feedbackList, HttpStatus.OK);
     }
 

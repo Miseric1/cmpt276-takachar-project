@@ -18,6 +18,11 @@ public class Feedback {
     private Long id;
 
     private String category;
+
+    @Enumerated(EnumType.STRING)
+    @jakarta.persistence.Column(nullable = false, length = 20,
+            columnDefinition = "varchar(20) default 'FEEDBACK'")
+    private SubmissionType type;
     
     private String project;
     
@@ -45,19 +50,27 @@ public class Feedback {
 
     public Feedback() {
         this.status = "OPEN"; // Default status
+        this.type = SubmissionType.FEEDBACK;
     }
 
     public Feedback(String category, String project, String account, String description, String createdBy) {
+        this(category, project, account, description, createdBy, SubmissionType.FEEDBACK);
+    }
+
+    public Feedback(String category, String project, String account, String description,
+                    String createdBy, SubmissionType type) {
         this.category = category;
         this.project = project;
         this.account = account;
         this.description = description;
         this.createdBy = createdBy;
         this.status = "OPEN";
+        this.type = type == null ? SubmissionType.FEEDBACK : type;
     }
 
     @PrePersist
     protected void onCreate() {
+        if (this.type == null) this.type = SubmissionType.FEEDBACK;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
     }
@@ -83,6 +96,14 @@ public class Feedback {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public SubmissionType getType() {
+        return type;
+    }
+
+    public void setType(SubmissionType type) {
+        this.type = type;
     }
 
     public String getProject() {

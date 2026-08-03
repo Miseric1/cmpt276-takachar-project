@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 @Service
-@ConditionalOnProperty(name = "app.notifications.email.enabled", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(name = "app.notifications.provider", havingValue = "log", matchIfMissing = true)
 public class LoggingTicketNotificationService implements TicketNotificationService {
     private static final Logger log = LoggerFactory.getLogger(LoggingTicketNotificationService.class);
 

@@ -1,10 +1,12 @@
 package com.example.demo.service;
 
 import com.example.demo.model.Feedback;
+import com.example.demo.model.SubmissionType;
 import com.example.demo.repository.FeedbackRepository;
 import com.example.demo.service.sentiment.SentimentAnalysisService;
 import com.example.demo.service.sentiment.SentimentResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,6 +30,16 @@ public class FeedbackService {
         return feedbackRepository.findAll();
     }
 
+    public List<Feedback> search(SubmissionType type, String sortBy, Sort.Direction direction) {
+        String property = switch (sortBy == null ? "createdAt" : sortBy) {
+            case "type", "status", "category", "project", "account", "createdAt", "updatedAt" ->
+                    sortBy == null ? "createdAt" : sortBy;
+            default -> throw new IllegalArgumentException("Unsupported feedback sort field: " + sortBy);
+        };
+        Sort sort = Sort.by(direction == null ? Sort.Direction.DESC : direction, property);
+        return type == null ? feedbackRepository.findAll(sort) : feedbackRepository.findByType(type, sort);
+    }
+
     public Optional<Feedback> getFeedbackById(Long id) {
         return feedbackRepository.findById(id);
     }
@@ -36,6 +48,7 @@ public class FeedbackService {
         if (feedback.getStatus() == null || feedback.getStatus().isEmpty()) {
             feedback.setStatus("OPEN");
         }
+        if (feedback.getType() == null) feedback.setType(SubmissionType.FEEDBACK);
         analyze(feedback);
         return feedbackRepository.save(feedback);
     }
@@ -43,6 +56,7 @@ public class FeedbackService {
     public Feedback updateFeedback(Long id, Feedback updatedFeedback) {
         return feedbackRepository.findById(id).map(feedback -> {
             feedback.setCategory(updatedFeedback.getCategory());
+            if (updatedFeedback.getType() != null) feedback.setType(updatedFeedback.getType());
             feedback.setProject(updatedFeedback.getProject());
             feedback.setAccount(updatedFeedback.getAccount());
             feedback.setDescription(updatedFeedback.getDescription());
