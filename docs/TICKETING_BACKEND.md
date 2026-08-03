@@ -6,9 +6,10 @@ It is API-only; the existing admin feedback UI is unchanged.
 ## Delivered workflow
 
 1. A signed-in customer starts a persisted diagnostic session.
-2. Each selected option advances to another configured question or a published
-   Knowledge Base article.
-3. The customer confirms whether the article resolved the issue.
+2. Each selected option advances through PR #17's UUID-based diagnostic tree
+   to another question or a terminal resolution.
+3. A resolution can carry a published Knowledge Base article, and the customer
+   confirms whether the suggested resolution fixed the issue.
 4. An unresolved session can be escalated exactly once into a support ticket.
 5. The complete question/answer trail and suggested article are attached to
    the ticket automatically.
@@ -23,16 +24,17 @@ always derived from the authenticated session. An admin may provide
 
 ## Main tables
 
-- `diagnostic_questions`, `diagnostic_options`
+- `diagnostic_nodes`, `diagnostic_options` (authoritative PR #17 tree)
 - `diagnostic_sessions`, `diagnostic_answers`
 - `support_tickets`
 - `ticket_timeline_events`
 - `ticket_attachments`
 
 Historical question text and selected answer labels are snapshotted into
-`diagnostic_answers`, so editing the tree later does not rewrite old tickets.
-Ticket rows use optimistic locking. Questions are deactivated instead of
-deleted to preserve history.
+`diagnostic_answers`, so replacing the tree later does not rewrite old tickets.
+An active session stores its current node UUID without a foreign key, allowing
+the admin editor's full-replace save operation to remain authoritative. Ticket
+rows use optimistic locking.
 
 ## Status workflow
 

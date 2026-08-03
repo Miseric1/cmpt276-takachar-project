@@ -1,11 +1,12 @@
 package com.example.demo.dto.diagnostic;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record DiagnosticTrailDto(
-        Long questionId,
+        UUID questionId,
         String question,
-        Long optionId,
+        UUID optionId,
         String selectedOption,
         String answerText,
         LocalDateTime answeredAt) {

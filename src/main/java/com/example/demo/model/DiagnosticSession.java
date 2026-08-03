@@ -33,13 +33,15 @@ public class DiagnosticSession {
     @Column(nullable = false, length = 30)
     private DiagnosticSessionStatus status = DiagnosticSessionStatus.IN_PROGRESS;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "current_question_id")
-    private DiagnosticQuestion currentQuestion;
+    @Column(name = "current_node_id")
+    private UUID currentNodeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "suggested_article_id")
     private KnowledgeArticle suggestedArticle;
+
+    @Column(length = 2000)
+    private String suggestedResolution;
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("answeredAt ASC")
@@ -69,10 +71,12 @@ public class DiagnosticSession {
     public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
     public DiagnosticSessionStatus getStatus() { return status; }
     public void setStatus(DiagnosticSessionStatus status) { this.status = status; }
-    public DiagnosticQuestion getCurrentQuestion() { return currentQuestion; }
-    public void setCurrentQuestion(DiagnosticQuestion currentQuestion) { this.currentQuestion = currentQuestion; }
+    public UUID getCurrentNodeId() { return currentNodeId; }
+    public void setCurrentNodeId(UUID currentNodeId) { this.currentNodeId = currentNodeId; }
     public KnowledgeArticle getSuggestedArticle() { return suggestedArticle; }
     public void setSuggestedArticle(KnowledgeArticle suggestedArticle) { this.suggestedArticle = suggestedArticle; }
+    public String getSuggestedResolution() { return suggestedResolution; }
+    public void setSuggestedResolution(String suggestedResolution) { this.suggestedResolution = suggestedResolution; }
     public List<DiagnosticAnswer> getAnswers() { return answers; }
     public void setAnswers(List<DiagnosticAnswer> answers) { this.answers = answers; }
     public LocalDateTime getCreatedAt() { return createdAt; }

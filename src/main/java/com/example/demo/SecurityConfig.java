@@ -68,7 +68,8 @@ public class SecurityConfig {
                 // Diagnostic sessions and ticket creation/read are available
                 // to any signed-in customer; tree management and staff workflow
                 // actions remain admin-only.
-                .requestMatchers("/api/diagnostics/questions/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/tree").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/tree").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/api/tickets/*/assignment").hasRole("ADMIN")
                 .requestMatchers("/api/tickets/**", "/api/diagnostics/**").authenticated()
 

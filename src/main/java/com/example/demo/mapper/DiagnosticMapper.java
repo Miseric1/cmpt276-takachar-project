@@ -1,33 +1,16 @@
 package com.example.demo.mapper;
 
-import com.example.demo.dto.diagnostic.DiagnosticOptionDto;
-import com.example.demo.dto.diagnostic.DiagnosticQuestionDto;
 import com.example.demo.dto.diagnostic.DiagnosticSessionResponse;
 import com.example.demo.dto.diagnostic.DiagnosticTrailDto;
+import com.example.demo.dto.diagnostic.DiagnosticTreeNodeDto;
+import com.example.demo.dto.diagnostic.DiagnosticTreeOptionDto;
 import com.example.demo.dto.knowledge.ArticleReference;
 import com.example.demo.model.DiagnosticAnswer;
-import com.example.demo.model.DiagnosticQuestion;
+import com.example.demo.model.DiagnosticNode;
 import com.example.demo.model.DiagnosticSession;
 
 public final class DiagnosticMapper {
     private DiagnosticMapper() {
-    }
-
-    public static DiagnosticQuestionDto toQuestion(DiagnosticQuestion question) {
-        if (question == null) return null;
-        return new DiagnosticQuestionDto(
-                question.getId(),
-                question.getKey(),
-                question.getPrompt(),
-                question.getCategory(),
-                question.isRootQuestion(),
-                question.isActive(),
-                question.getSuggestedArticle() == null ? null : question.getSuggestedArticle().getId(),
-                question.getOptions().stream()
-                        .map(option -> new DiagnosticOptionDto(option.getId(), option.getLabel(), option.getValue(),
-                                option.getNextQuestion() == null ? null : option.getNextQuestion().getKey(),
-                                option.getSuggestedArticle() == null ? null : option.getSuggestedArticle().getId()))
-                        .toList());
     }
 
     public static DiagnosticTrailDto toTrail(DiagnosticAnswer answer) {
@@ -35,12 +18,23 @@ public final class DiagnosticMapper {
                 answer.getOptionId(), answer.getOptionLabel(), answer.getAnswerText(), answer.getAnsweredAt());
     }
 
-    public static DiagnosticSessionResponse toResponse(DiagnosticSession session) {
+    public static DiagnosticTreeNodeDto toTreeNode(DiagnosticNode node) {
+        if (node == null) return null;
+        return new DiagnosticTreeNodeDto(
+                node.getId(), node.getType(), node.getText(), node.getKnowledgeArticleId(),
+                node.getOptions().stream()
+                        .map(option -> new DiagnosticTreeOptionDto(
+                                option.getId(), option.getLabel(), option.getDestinationNodeId()))
+                        .toList());
+    }
+
+    public static DiagnosticSessionResponse toResponse(DiagnosticSession session, DiagnosticNode currentNode) {
         return new DiagnosticSessionResponse(
                 session.getId(),
                 session.getStatus(),
-                toQuestion(session.getCurrentQuestion()),
+                toTreeNode(currentNode),
                 session.getSuggestedArticle() == null ? null : ArticleReference.from(session.getSuggestedArticle()),
+                session.getSuggestedResolution(),
                 session.getAnswers().stream().map(DiagnosticMapper::toTrail).toList(),
                 session.getCreatedAt(), session.getUpdatedAt(), session.getCompletedAt());
     }

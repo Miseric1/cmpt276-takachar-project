@@ -2,12 +2,12 @@ package com.example.demo;
 
 import com.example.demo.dto.knowledge.KnowledgeRequest;
 import com.example.demo.dto.knowledge.KnowledgeResponse;
-import com.example.demo.model.WorkflowDiagnosticOption;
-import com.example.demo.model.DiagnosticQuestion;
+import com.example.demo.model.DiagnosticNode;
+import com.example.demo.model.DiagnosticOption;
 import com.example.demo.model.Feedback;
 import com.example.demo.model.PublicationStatus;
 import com.example.demo.model.SentimentLabel;
-import com.example.demo.repository.DiagnosticQuestionRepository;
+import com.example.demo.repository.DiagnosticNodeRepository;
 import com.example.demo.repository.KnowledgeArticleRepository;
 import com.example.demo.service.DashboardService;
 import com.example.demo.service.FeedbackService;
@@ -23,8 +23,11 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.util.Set;
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -33,6 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -46,7 +50,7 @@ class TicketingApiIntegrationTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
-    @Autowired DiagnosticQuestionRepository questionRepository;
+    @Autowired DiagnosticNodeRepository nodeRepository;
     @Autowired KnowledgeArticleRepository articleRepository;
     @Autowired KnowledgeService knowledgeService;
     @Autowired DashboardService dashboardService;
@@ -102,53 +106,51 @@ class TicketingApiIntegrationTest {
                 "Troubleshooting", Set.of("power"), Set.of(), "admin@test.com", PublicationStatus.PUBLISHED),
                 "admin@test.com");
 
-        DiagnosticQuestion child = new DiagnosticQuestion();
-        child.setKey("test-power-detail");
-        child.setPrompt("Does the power indicator turn on?");
-        child.setCategory("Test diagnostics");
-        child.setActive(true);
-        child.setSuggestedArticle(articleRepository.findById(article.id()).orElseThrow());
-        questionRepository.save(child);
+        UUID resolutionId = UUID.randomUUID();
+        DiagnosticNode resolution = DiagnosticNode.builder()
+                .id(resolutionId).type("resolution").text("Disconnect power for ten minutes and reconnect.")
+                .root(false).knowledgeArticleId(article.id()).options(List.of()).build();
 
-        DiagnosticQuestion root = new DiagnosticQuestion();
-        root.setKey("test-root");
-        root.setPrompt("Which system is affected?");
-        root.setCategory("Test diagnostics");
-        root.setRootQuestion(true);
-        root.setActive(true);
-        WorkflowDiagnosticOption option = new WorkflowDiagnosticOption();
-        option.setQuestion(root);
-        option.setLabel("Power system");
-        option.setValue("power");
-        option.setDisplayOrder(1);
-        option.setNextQuestion(child);
-        root.getOptions().add(option);
-        root = questionRepository.save(root);
+        UUID childId = UUID.randomUUID();
+        UUID childOptionId = UUID.randomUUID();
+        DiagnosticOption childOption = DiagnosticOption.builder().id(childOptionId)
+                .label("No indicator light").destinationNodeId(resolutionId).sortOrder(0).build();
+        DiagnosticNode child = DiagnosticNode.builder()
+                .id(childId).type("question").text("Does the power indicator turn on?")
+                .root(false).options(List.of(childOption)).build();
+
+        UUID rootId = UUID.randomUUID();
+        UUID rootOptionId = UUID.randomUUID();
+        DiagnosticOption rootOption = DiagnosticOption.builder().id(rootOptionId)
+                .label("Power system").destinationNodeId(childId).sortOrder(0).build();
+        DiagnosticNode root = DiagnosticNode.builder()
+                .id(rootId).type("question").text("Which system is affected?")
+                .root(true).options(List.of(rootOption)).build();
+        nodeRepository.saveAll(List.of(root, child, resolution));
 
         String startBody = mockMvc.perform(post("/api/diagnostics/sessions")
-                        .param("category", "Test diagnostics")
                         .with(user(CUSTOMER).roles("CUSTOMER")))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.currentQuestion.key").value("test-root"))
+                .andExpect(jsonPath("$.currentQuestion.id").value(rootId.toString()))
                 .andReturn().getResponse().getContentAsString();
         JsonNode started = objectMapper.readTree(startBody);
         String sessionId = started.path("id").asText();
-        long optionId = root.getOptions().get(0).getId();
-
         mockMvc.perform(post("/api/diagnostics/sessions/{id}/answers", sessionId)
                         .with(user(CUSTOMER).roles("CUSTOMER"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"questionId\":" + root.getId() + ",\"optionId\":" + optionId + "}"))
+                        .content("{\"questionId\":\"" + rootId + "\",\"optionId\":\"" + rootOptionId + "\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.currentQuestion.key").value("test-power-detail"));
+                .andExpect(jsonPath("$.currentQuestion.id").value(childId.toString()));
 
         mockMvc.perform(post("/api/diagnostics/sessions/{id}/answers", sessionId)
                         .with(user(CUSTOMER).roles("CUSTOMER"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"questionId\":" + child.getId() + ",\"answerText\":\"No indicator light\"}"))
+                        .content("{\"questionId\":\"" + childId + "\",\"optionId\":\"" + childOptionId +
+                                "\",\"answerText\":\"No indicator light\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SOLUTION_SUGGESTED"))
-                .andExpect(jsonPath("$.suggestedArticle.id").value(article.id()));
+                .andExpect(jsonPath("$.suggestedArticle.id").value(article.id()))
+                .andExpect(jsonPath("$.suggestedResolution").value("Disconnect power for ten minutes and reconnect."));
 
         mockMvc.perform(post("/api/diagnostics/sessions/{id}/resolution", sessionId)
                         .with(user(CUSTOMER).roles("CUSTOMER"))
@@ -161,6 +163,42 @@ class TicketingApiIntegrationTest {
         assertThat(ticket.path("automaticResolutionAttempted").asBoolean()).isTrue();
         assertThat(ticket.path("suggestedArticle").path("id").asLong()).isEqualTo(article.id());
         assertThat(ticket.path("diagnosticTrail").size()).isEqualTo(2);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void primaryTreeCanBeReplacedWhileDiagnosticSessionIsActive() throws Exception {
+        UUID rootId = UUID.randomUUID();
+        UUID optionId = UUID.randomUUID();
+        UUID resolutionId = UUID.randomUUID();
+        String initialTree = treePayload(rootId, optionId, resolutionId, "Which component is affected?");
+
+        mockMvc.perform(put("/api/tree")
+                        .with(user("admin@test.com").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(initialTree))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rootId").value(rootId.toString()));
+
+        String sessionBody = mockMvc.perform(post("/api/diagnostics/sessions")
+                        .with(user(CUSTOMER).roles("CUSTOMER")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.currentQuestion.id").value(rootId.toString()))
+                .andReturn().getResponse().getContentAsString();
+        String sessionId = objectMapper.readTree(sessionBody).path("id").asText();
+
+        mockMvc.perform(put("/api/tree")
+                        .with(user("admin@test.com").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(treePayload(rootId, optionId, resolutionId,
+                                "Which component is affected right now?")))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/diagnostics/sessions/{id}", sessionId)
+                        .with(user(CUSTOMER).roles("CUSTOMER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.currentQuestion.id").value(rootId.toString()))
+                .andExpect(jsonPath("$.currentQuestion.text").value("Which component is affected right now?"));
     }
 
     @Test
@@ -212,6 +250,12 @@ class TicketingApiIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"department\":\"Technical Support\"}"))
                 .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/api/tree")
+                        .with(user(CUSTOMER).roles("CUSTOMER"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rootId\":null,\"nodes\":{}}"))
+                .andExpect(status().isForbidden());
     }
 
     private JsonNode createTicket(String customer, String subject, String diagnosticSessionId) throws Exception {
@@ -226,6 +270,20 @@ class TicketingApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response);
+    }
+
+    private String treePayload(UUID rootId, UUID optionId, UUID resolutionId, String question) {
+        return """
+                {
+                  "rootId":"%s",
+                  "nodes":{
+                    "%s":{"type":"question","text":"%s","options":[
+                      {"id":"%s","label":"Power system","nextId":"%s"}
+                    ]},
+                    "%s":{"type":"resolution","text":"Restart the unit.","options":[]}
+                  }
+                }
+                """.formatted(rootId, rootId, question, optionId, resolutionId, resolutionId);
     }
 
 }

@@ -3,11 +3,11 @@ package com.example.demo;
 import com.example.demo.dto.knowledge.KnowledgeRequest;
 import com.example.demo.dto.knowledge.KnowledgeSummary;
 import com.example.demo.model.PublicationStatus;
-import com.example.demo.model.WorkflowDiagnosticOption;
-import com.example.demo.model.DiagnosticQuestion;
+import com.example.demo.model.DiagnosticNode;
+import com.example.demo.model.DiagnosticOption;
 import com.example.demo.model.KnowledgeArticle;
 import com.example.demo.model.User;
-import com.example.demo.repository.DiagnosticQuestionRepository;
+import com.example.demo.repository.DiagnosticNodeRepository;
 import com.example.demo.repository.KnowledgeArticleRepository;
 import com.example.demo.service.KnowledgeService;
 
@@ -20,7 +20,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Locale;
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -117,67 +119,73 @@ public class DataInitializer {
     @Bean
     @Order(3)
     @ConditionalOnProperty(name = "app.seed-diagnostic-data", havingValue = "true", matchIfMissing = true)
-    public CommandLineRunner seedDiagnosticTree(DiagnosticQuestionRepository questionRepository,
+    public CommandLineRunner seedDiagnosticTree(DiagnosticNodeRepository nodeRepository,
                                                 KnowledgeArticleRepository articleRepository) {
         return args -> {
-            if (questionRepository.existsByKey("support-area")) return;
+            if (nodeRepository.count() > 0) return;
 
-            DiagnosticQuestion equipment = diagnosticQuestion("equipment-issue",
-                    "Which equipment symptom best matches the problem?", "Equipment & Hardware", false,
+            DiagnosticNode equipmentResolution = resolutionNode("equipment-resolution",
+                    "Review the equipment troubleshooting steps in the related FAQ, power-cycle the unit, and check the indicator lights.",
                     articleRepository.findByTitleIgnoreCase("What should I do if my unit won't power on?").orElse(null));
-            DiagnosticQuestion logistics = diagnosticQuestion("logistics-issue",
-                    "What kind of pickup or logistics help do you need?", "Biomass Pickup & Logistics", false,
+            DiagnosticNode logisticsResolution = resolutionNode("logistics-resolution",
+                    "Review the pickup guidance in the related FAQ and confirm the site address and preferred pickup date.",
                     articleRepository.findByTitleIgnoreCase("How do I schedule a biomass pickup?").orElse(null));
-            DiagnosticQuestion account = diagnosticQuestion("account-issue",
-                    "What account or access problem are you experiencing?", "Account & Access", false,
+            DiagnosticNode accountResolution = resolutionNode("account-resolution",
+                    "Use the account recovery steps in the related FAQ and check the registered email inbox.",
                     articleRepository.findByTitleIgnoreCase("How do I reset my password?").orElse(null));
-            DiagnosticQuestion billing = diagnosticQuestion("billing-issue",
-                    "What billing or payment topic can we help with?", "Billing & Payments", false,
+            DiagnosticNode billingResolution = resolutionNode("billing-resolution",
+                    "Review the payment timeline in the related FAQ and confirm the pickup reference for the payment.",
                     articleRepository.findByTitleIgnoreCase("When will I receive payment after a pickup?").orElse(null));
-            questionRepository.saveAll(java.util.List.of(equipment, logistics, account, billing));
 
-            equipment.getOptions().add(option(equipment, "Unit will not power on", "power", 1, null));
-            equipment.getOptions().add(option(equipment, "Unit shows an error or overheats", "error", 2, null));
-            logistics.getOptions().add(option(logistics, "Schedule or change a pickup", "schedule", 1, null));
-            logistics.getOptions().add(option(logistics, "Pickup is late or incomplete", "delay", 2, null));
-            account.getOptions().add(option(account, "Cannot sign in", "signin", 1, null));
-            account.getOptions().add(option(account, "Update account details", "details", 2, null));
-            billing.getOptions().add(option(billing, "Payment has not arrived", "late-payment", 1, null));
-            billing.getOptions().add(option(billing, "Payment amount looks wrong", "amount", 2, null));
-            questionRepository.saveAll(java.util.List.of(equipment, logistics, account, billing));
+            DiagnosticNode equipment = questionNode("equipment-question",
+                    "Which equipment symptom best matches the problem?", false, List.of(
+                            treeOption("Unit will not power on", equipmentResolution.getId(), 0),
+                            treeOption("Unit shows an error or overheats", equipmentResolution.getId(), 1)));
+            DiagnosticNode logistics = questionNode("logistics-question",
+                    "What kind of pickup or logistics help do you need?", false, List.of(
+                            treeOption("Schedule or change a pickup", logisticsResolution.getId(), 0),
+                            treeOption("Pickup is late or incomplete", logisticsResolution.getId(), 1)));
+            DiagnosticNode account = questionNode("account-question",
+                    "What account or access problem are you experiencing?", false, List.of(
+                            treeOption("Cannot sign in", accountResolution.getId(), 0),
+                            treeOption("Update account details", accountResolution.getId(), 1)));
+            DiagnosticNode billing = questionNode("billing-question",
+                    "What billing or payment topic can we help with?", false, List.of(
+                            treeOption("Payment has not arrived", billingResolution.getId(), 0),
+                            treeOption("Payment amount looks wrong", billingResolution.getId(), 1)));
+            DiagnosticNode root = questionNode("support-root",
+                    "Which area best describes your support issue?", true, List.of(
+                            treeOption("Equipment or hardware", equipment.getId(), 0),
+                            treeOption("Biomass pickup or logistics", logistics.getId(), 1),
+                            treeOption("Account or access", account.getId(), 2),
+                            treeOption("Billing or payments", billing.getId(), 3)));
 
-            DiagnosticQuestion root = diagnosticQuestion("support-area",
-                    "Which area best describes your support issue?", "General", true, null);
-            root.getOptions().add(option(root, "Equipment or hardware", "equipment", 1, equipment));
-            root.getOptions().add(option(root, "Biomass pickup or logistics", "logistics", 2, logistics));
-            root.getOptions().add(option(root, "Account or access", "account", 3, account));
-            root.getOptions().add(option(root, "Billing or payments", "billing", 4, billing));
-            questionRepository.save(root);
+            nodeRepository.saveAll(List.of(root, equipment, logistics, account, billing,
+                    equipmentResolution, logisticsResolution, accountResolution, billingResolution));
             System.out.println("Seeded the diagnostic support tree.");
         };
     }
 
-    private static DiagnosticQuestion diagnosticQuestion(String key, String prompt, String category,
-                                                         boolean root, KnowledgeArticle article) {
-        DiagnosticQuestion question = new DiagnosticQuestion();
-        question.setKey(key);
-        question.setPrompt(prompt);
-        question.setCategory(category);
-        question.setRootQuestion(root);
-        question.setActive(true);
-        question.setSuggestedArticle(article);
-        return question;
+    private static DiagnosticNode questionNode(String key, String text, boolean root,
+                                               List<DiagnosticOption> options) {
+        return DiagnosticNode.builder()
+                .id(treeId(key)).type("question").text(text).root(root).options(options).build();
     }
 
-    private static WorkflowDiagnosticOption option(DiagnosticQuestion question, String label, String value,
-                                           int order, DiagnosticQuestion next) {
-        WorkflowDiagnosticOption option = new WorkflowDiagnosticOption();
-        option.setQuestion(question);
-        option.setLabel(label);
-        option.setValue(value);
-        option.setDisplayOrder(order);
-        option.setNextQuestion(next);
-        return option;
+    private static DiagnosticNode resolutionNode(String key, String text, KnowledgeArticle article) {
+        return DiagnosticNode.builder()
+                .id(treeId(key)).type("resolution").text(text).root(false)
+                .knowledgeArticleId(article == null ? null : article.getId()).options(List.of()).build();
+    }
+
+    private static DiagnosticOption treeOption(String label, UUID destination, int order) {
+        return DiagnosticOption.builder().id(UUID.randomUUID()).label(label)
+                .destinationNodeId(destination).sortOrder(order).build();
+    }
+
+    private static UUID treeId(String key) {
+        return UUID.nameUUIDFromBytes(("takachar-diagnostic:" + key)
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     private static final String[][] PLACEHOLDER_ARTICLES = {

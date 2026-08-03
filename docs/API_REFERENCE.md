@@ -135,30 +135,44 @@ counts. See `dto/dashboard/*` for exact field lists.
 
 ---
 
-## Guided diagnostics — `/api/diagnostics`
+## Diagnostic tree — `/api/tree`
+
+PR #17's UUID node graph is the authoritative diagnostic configuration.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/tree` | signed in | Read the complete flat node map and root UUID |
+| PUT | `/api/tree` | admin | Replace the complete diagnostic tree |
+
+Question options route to another question or a terminal `resolution` node.
+Tree replacement does not delete session history because active sessions store
+the current node UUID without a database foreign key.
+
+## Guided diagnostic sessions — `/api/diagnostics`
 
 All diagnostic endpoints require a signed-in session. Session access is limited
 to its customer and admins.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/sessions?category=` | signed in | Start at an active root question → `201` |
+| POST | `/sessions` | signed in | Start at the configured root question → `201` |
 | GET | `/sessions/{uuid}` | owner/admin | Current question, suggestion, and trail |
 | POST | `/sessions/{uuid}/answers` | owner/admin | Answer current question and advance |
 | POST | `/sessions/{uuid}/resolution` | owner/admin | Confirm `{resolved:true|false}` |
 | GET | `/suggestions?query=` | signed in | Top five published FAQ matches |
-| GET | `/questions` | admin | List configured questions |
-| POST | `/questions` | admin | Create a question and options |
-| PUT | `/questions/{id}` | admin | Replace question configuration |
-| DELETE | `/questions/{id}` | admin | Safely deactivate a question |
 
 Answer request:
 
 ```json
-{"questionId": 12, "optionId": 44, "answerText": "Optional detail"}
+{
+  "questionId": "d7cbbf6e-6bb8-4eef-b4f0-04b73cfac531",
+  "optionId": "551eed75-a28c-4fa0-ad56-69320dcb11a1",
+  "answerText": "Optional detail"
+}
 ```
 
-The response status is one of `IN_PROGRESS`, `SOLUTION_SUGGESTED`,
+Resolution responses include `suggestedResolution` and, when configured on the
+resolution node, `suggestedArticle`. The status is one of `IN_PROGRESS`, `SOLUTION_SUGGESTED`,
 `READY_FOR_TICKET`, `RESOLVED_WITH_FAQ`, or `ESCALATED`.
 
 ## Tickets — `/api/tickets`

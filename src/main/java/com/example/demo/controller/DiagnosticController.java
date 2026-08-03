@@ -2,8 +2,6 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.PageResponse;
 import com.example.demo.dto.diagnostic.DiagnosticAnswerRequest;
-import com.example.demo.dto.diagnostic.DiagnosticQuestionDto;
-import com.example.demo.dto.diagnostic.DiagnosticQuestionRequest;
 import com.example.demo.dto.diagnostic.DiagnosticResolutionRequest;
 import com.example.demo.dto.diagnostic.DiagnosticSessionResponse;
 import com.example.demo.dto.knowledge.KnowledgeSummary;
@@ -14,18 +12,15 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -66,29 +61,6 @@ public class DiagnosticController {
     @GetMapping("/suggestions")
     public PageResponse<KnowledgeSummary> suggestions(@RequestParam String query) {
         return diagnosticService.suggestArticles(query);
-    }
-
-    @GetMapping("/questions")
-    public List<DiagnosticQuestionDto> questions() {
-        return diagnosticService.listQuestions();
-    }
-
-    @PostMapping("/questions")
-    public ResponseEntity<DiagnosticQuestionDto> createQuestion(
-            @Valid @RequestBody DiagnosticQuestionRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(diagnosticService.createQuestion(request));
-    }
-
-    @PutMapping("/questions/{id}")
-    public DiagnosticQuestionDto updateQuestion(@PathVariable Long id,
-                                                @Valid @RequestBody DiagnosticQuestionRequest request) {
-        return diagnosticService.updateQuestion(id, request);
-    }
-
-    @DeleteMapping("/questions/{id}")
-    public ResponseEntity<Void> deactivateQuestion(@PathVariable Long id) {
-        diagnosticService.deactivateQuestion(id);
-        return ResponseEntity.noContent().build();
     }
 
     private boolean isAdmin(Authentication auth) {

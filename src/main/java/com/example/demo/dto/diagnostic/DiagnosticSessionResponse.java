@@ -10,8 +10,9 @@ import java.util.UUID;
 public record DiagnosticSessionResponse(
         UUID id,
         DiagnosticSessionStatus status,
-        DiagnosticQuestionDto currentQuestion,
+        DiagnosticTreeNodeDto currentQuestion,
         ArticleReference suggestedArticle,
+        String suggestedResolution,
         List<DiagnosticTrailDto> answers,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,

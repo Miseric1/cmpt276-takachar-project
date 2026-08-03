@@ -12,6 +12,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "diagnostic_answers")
@@ -25,12 +26,12 @@ public class DiagnosticAnswer {
     private DiagnosticSession session;
 
     @Column(nullable = false)
-    private Long questionId;
+    private UUID questionId;
 
     @Column(nullable = false, length = 500)
     private String questionPrompt;
 
-    private Long optionId;
+    private UUID optionId;
 
     @Column(length = 250)
     private String optionLabel;
@@ -47,12 +48,12 @@ public class DiagnosticAnswer {
     public Long getId() { return id; }
     public DiagnosticSession getSession() { return session; }
     public void setSession(DiagnosticSession session) { this.session = session; }
-    public Long getQuestionId() { return questionId; }
-    public void setQuestionId(Long questionId) { this.questionId = questionId; }
+    public UUID getQuestionId() { return questionId; }
+    public void setQuestionId(UUID questionId) { this.questionId = questionId; }
     public String getQuestionPrompt() { return questionPrompt; }
     public void setQuestionPrompt(String questionPrompt) { this.questionPrompt = questionPrompt; }
-    public Long getOptionId() { return optionId; }
-    public void setOptionId(Long optionId) { this.optionId = optionId; }
+    public UUID getOptionId() { return optionId; }
+    public void setOptionId(UUID optionId) { this.optionId = optionId; }
     public String getOptionLabel() { return optionLabel; }
     public void setOptionLabel(String optionLabel) { this.optionLabel = optionLabel; }
     public String getAnswerText() { return answerText; }
