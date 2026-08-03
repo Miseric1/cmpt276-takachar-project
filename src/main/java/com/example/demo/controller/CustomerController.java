@@ -68,4 +68,13 @@ public class CustomerController {
         return "customer-faq";
     }
 
+    @GetMapping("/customer/support")
+    public String customerSupport(
+            @AuthenticationPrincipal UserDetails userDetails,
+            Model model
+    ) {
+        model.addAttribute("email", userDetails.getUsername());
+        return "customer-support";
+    }
+
 }
