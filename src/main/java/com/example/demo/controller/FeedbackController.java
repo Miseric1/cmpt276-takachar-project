@@ -59,4 +59,13 @@ public class FeedbackController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @PostMapping("/{id}/sentiment")
+    public ResponseEntity<Feedback> reanalyzeSentiment(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(feedbackService.reanalyzeSentiment(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

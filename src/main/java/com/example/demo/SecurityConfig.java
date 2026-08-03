@@ -62,6 +62,16 @@ public class SecurityConfig {
                 // The staff dashboard analytics are entirely admin-only.
                 .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
 
+                // Sentiment re-analysis is an administrative operation.
+                .requestMatchers(HttpMethod.POST, "/api/feedback/*/sentiment").hasRole("ADMIN")
+
+                // Diagnostic sessions and ticket creation/read are available
+                // to any signed-in customer; tree management and staff workflow
+                // actions remain admin-only.
+                .requestMatchers("/api/diagnostics/questions/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/tickets/*/assignment").hasRole("ADMIN")
+                .requestMatchers("/api/tickets/**", "/api/diagnostics/**").authenticated()
+
                 // --- Existing catch-all rules (unchanged) ------------------
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/customer/**").hasAnyRole("CUSTOMER", "ADMIN")

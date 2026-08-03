@@ -85,4 +85,13 @@ The project targets Java 17 (Spring Boot 3.2.5). Run `mvn test` to verify; use
 `SPRING_PROFILES_ACTIVE=prod` with the Supabase env vars to run against Supabase,
 or no profile for local H2.
 
+## Ticketing backend
+
+The backend now includes the guided diagnostic tree, published FAQ matching,
+support-ticket lifecycle and audit trail, customer/admin access boundaries,
+SPOC and customer email events, image/video attachments, live ticket dashboard
+analytics, and Hugging Face feedback sentiment classification. See
+[`docs/TICKETING_BACKEND.md`](docs/TICKETING_BACKEND.md) for configuration and
+[`docs/API_REFERENCE.md`](docs/API_REFERENCE.md) for frontend integration.
+
 --- 

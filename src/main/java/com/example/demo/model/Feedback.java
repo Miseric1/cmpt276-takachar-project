@@ -4,6 +4,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import java.time.LocalDateTime;
@@ -21,6 +23,7 @@ public class Feedback {
     
     private String account;
     
+    @jakarta.persistence.Column(columnDefinition = "TEXT")
     private String description;
     
     private String status;
@@ -30,6 +33,15 @@ public class Feedback {
     private LocalDateTime createdAt;
     
     private LocalDateTime updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    private SentimentLabel sentiment;
+
+    private Double sentimentConfidence;
+
+    private String sentimentModel;
+
+    private LocalDateTime sentimentAnalyzedAt;
 
     public Feedback() {
         this.status = "OPEN"; // Default status
@@ -127,5 +139,37 @@ public class Feedback {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public SentimentLabel getSentiment() {
+        return sentiment;
+    }
+
+    public void setSentiment(SentimentLabel sentiment) {
+        this.sentiment = sentiment;
+    }
+
+    public Double getSentimentConfidence() {
+        return sentimentConfidence;
+    }
+
+    public void setSentimentConfidence(Double sentimentConfidence) {
+        this.sentimentConfidence = sentimentConfidence;
+    }
+
+    public String getSentimentModel() {
+        return sentimentModel;
+    }
+
+    public void setSentimentModel(String sentimentModel) {
+        this.sentimentModel = sentimentModel;
+    }
+
+    public LocalDateTime getSentimentAnalyzedAt() {
+        return sentimentAnalyzedAt;
+    }
+
+    public void setSentimentAnalyzedAt(LocalDateTime sentimentAnalyzedAt) {
+        this.sentimentAnalyzedAt = sentimentAnalyzedAt;
     }
 }

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
  * Central error handling for the REST layer. It is scoped with
@@ -65,6 +66,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PropertyReferenceException.class)
     public ResponseEntity<ApiError> handleBadSort(PropertyReferenceException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, "Invalid sort or filter field: " + ex.getPropertyName(), request);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> handleUploadTooLarge(MaxUploadSizeExceededException ex,
+                                                          HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, "Attachment exceeds the configured upload size limit.", request);
     }
 
     /** Bean validation on @Valid @RequestBody DTOs. */

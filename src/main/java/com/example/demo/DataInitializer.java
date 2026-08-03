@@ -3,7 +3,12 @@ package com.example.demo;
 import com.example.demo.dto.knowledge.KnowledgeRequest;
 import com.example.demo.dto.knowledge.KnowledgeSummary;
 import com.example.demo.model.PublicationStatus;
+import com.example.demo.model.DiagnosticOption;
+import com.example.demo.model.DiagnosticQuestion;
+import com.example.demo.model.KnowledgeArticle;
 import com.example.demo.model.User;
+import com.example.demo.repository.DiagnosticQuestionRepository;
+import com.example.demo.repository.KnowledgeArticleRepository;
 import com.example.demo.service.KnowledgeService;
 
 import org.springframework.boot.CommandLineRunner;
@@ -11,6 +16,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Locale;
@@ -38,6 +44,7 @@ import java.util.stream.Collectors;
 public class DataInitializer {
 
     @Bean
+    @Order(1)
     public CommandLineRunner createAdmin(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             if (userRepository.findByEmail("admin@test.com").isEmpty()) {
@@ -61,6 +68,7 @@ public class DataInitializer {
      * of them from the FAQ page exactly like one they created themselves.
      */
     @Bean
+    @Order(2)
     @ConditionalOnProperty(name = "app.seed-demo-data", havingValue = "true", matchIfMissing = true)
     public CommandLineRunner seedFaqArticles(KnowledgeService knowledgeService) {
         return args -> {
@@ -104,6 +112,72 @@ public class DataInitializer {
                 System.out.println("Seeded " + created + " placeholder FAQ articles.");
             }
         };
+    }
+
+    @Bean
+    @Order(3)
+    @ConditionalOnProperty(name = "app.seed-diagnostic-data", havingValue = "true", matchIfMissing = true)
+    public CommandLineRunner seedDiagnosticTree(DiagnosticQuestionRepository questionRepository,
+                                                KnowledgeArticleRepository articleRepository) {
+        return args -> {
+            if (questionRepository.existsByKey("support-area")) return;
+
+            DiagnosticQuestion equipment = diagnosticQuestion("equipment-issue",
+                    "Which equipment symptom best matches the problem?", "Equipment & Hardware", false,
+                    articleRepository.findByTitleIgnoreCase("What should I do if my unit won't power on?").orElse(null));
+            DiagnosticQuestion logistics = diagnosticQuestion("logistics-issue",
+                    "What kind of pickup or logistics help do you need?", "Biomass Pickup & Logistics", false,
+                    articleRepository.findByTitleIgnoreCase("How do I schedule a biomass pickup?").orElse(null));
+            DiagnosticQuestion account = diagnosticQuestion("account-issue",
+                    "What account or access problem are you experiencing?", "Account & Access", false,
+                    articleRepository.findByTitleIgnoreCase("How do I reset my password?").orElse(null));
+            DiagnosticQuestion billing = diagnosticQuestion("billing-issue",
+                    "What billing or payment topic can we help with?", "Billing & Payments", false,
+                    articleRepository.findByTitleIgnoreCase("When will I receive payment after a pickup?").orElse(null));
+            questionRepository.saveAll(java.util.List.of(equipment, logistics, account, billing));
+
+            equipment.getOptions().add(option(equipment, "Unit will not power on", "power", 1, null));
+            equipment.getOptions().add(option(equipment, "Unit shows an error or overheats", "error", 2, null));
+            logistics.getOptions().add(option(logistics, "Schedule or change a pickup", "schedule", 1, null));
+            logistics.getOptions().add(option(logistics, "Pickup is late or incomplete", "delay", 2, null));
+            account.getOptions().add(option(account, "Cannot sign in", "signin", 1, null));
+            account.getOptions().add(option(account, "Update account details", "details", 2, null));
+            billing.getOptions().add(option(billing, "Payment has not arrived", "late-payment", 1, null));
+            billing.getOptions().add(option(billing, "Payment amount looks wrong", "amount", 2, null));
+            questionRepository.saveAll(java.util.List.of(equipment, logistics, account, billing));
+
+            DiagnosticQuestion root = diagnosticQuestion("support-area",
+                    "Which area best describes your support issue?", "General", true, null);
+            root.getOptions().add(option(root, "Equipment or hardware", "equipment", 1, equipment));
+            root.getOptions().add(option(root, "Biomass pickup or logistics", "logistics", 2, logistics));
+            root.getOptions().add(option(root, "Account or access", "account", 3, account));
+            root.getOptions().add(option(root, "Billing or payments", "billing", 4, billing));
+            questionRepository.save(root);
+            System.out.println("Seeded the diagnostic support tree.");
+        };
+    }
+
+    private static DiagnosticQuestion diagnosticQuestion(String key, String prompt, String category,
+                                                         boolean root, KnowledgeArticle article) {
+        DiagnosticQuestion question = new DiagnosticQuestion();
+        question.setKey(key);
+        question.setPrompt(prompt);
+        question.setCategory(category);
+        question.setRootQuestion(root);
+        question.setActive(true);
+        question.setSuggestedArticle(article);
+        return question;
+    }
+
+    private static DiagnosticOption option(DiagnosticQuestion question, String label, String value,
+                                           int order, DiagnosticQuestion next) {
+        DiagnosticOption option = new DiagnosticOption();
+        option.setQuestion(question);
+        option.setLabel(label);
+        option.setValue(value);
+        option.setDisplayOrder(order);
+        option.setNextQuestion(next);
+        return option;
     }
 
     private static final String[][] PLACEHOLDER_ARTICLES = {

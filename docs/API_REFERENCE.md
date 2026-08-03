@@ -1,4 +1,4 @@
-# API Reference — Iteration 2 (Dashboard, Knowledge Base)
+# API Reference — Dashboard, Knowledge Base, Ticketing
 
 All endpoints added in Iteration 2 are JSON REST APIs under `/api`. This
 reference is written so the frontend can integrate without reading backend code.
@@ -123,7 +123,7 @@ write API.
 |--------|------|-------------|
 | GET | `/api/dashboard` | Full summary: overview + all stat blocks + recent activity |
 | GET | `/api/dashboard/overview` | System-wide summary cards only |
-| GET | `/api/dashboard/tickets` | Ticket statistics (zeroed until Ticketing ships) |
+| GET | `/api/dashboard/tickets` | Live ticket counts, SLA health, rates, timings, and charts |
 | GET | `/api/dashboard/feedback` | Feedback statistics + submissions trend chart |
 | GET | `/api/dashboard/knowledge` | Knowledge statistics + leaderboards |
 | GET | `/api/dashboard/activity` | Paginated recent-activity feed |
@@ -135,7 +135,77 @@ counts. See `dto/dashboard/*` for exact field lists.
 
 ---
 
-## Existing endpoints (unchanged)
+## Guided diagnostics — `/api/diagnostics`
+
+All diagnostic endpoints require a signed-in session. Session access is limited
+to its customer and admins.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/sessions?category=` | signed in | Start at an active root question → `201` |
+| GET | `/sessions/{uuid}` | owner/admin | Current question, suggestion, and trail |
+| POST | `/sessions/{uuid}/answers` | owner/admin | Answer current question and advance |
+| POST | `/sessions/{uuid}/resolution` | owner/admin | Confirm `{resolved:true|false}` |
+| GET | `/suggestions?query=` | signed in | Top five published FAQ matches |
+| GET | `/questions` | admin | List configured questions |
+| POST | `/questions` | admin | Create a question and options |
+| PUT | `/questions/{id}` | admin | Replace question configuration |
+| DELETE | `/questions/{id}` | admin | Safely deactivate a question |
+
+Answer request:
+
+```json
+{"questionId": 12, "optionId": 44, "answerText": "Optional detail"}
+```
+
+The response status is one of `IN_PROGRESS`, `SOLUTION_SUGGESTED`,
+`READY_FOR_TICKET`, `RESOLVED_WITH_FAQ`, or `ESCALATED`.
+
+## Tickets — `/api/tickets`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/` | signed in | Admin: all/filter; customer: own only |
+| POST | `/` | signed in | Manual or diagnostic ticket → `201` |
+| GET | `/{id}` | owner/admin | Full ticket, trail, attachments, timeline |
+| PATCH | `/{id}/assignment` | admin | Department, assignee, SPOC, priority, target |
+| PATCH | `/{id}/status` | owner/admin | Admin workflow; customer may close resolved own ticket |
+| POST | `/{id}/timeline` | owner/admin | Add an auditable note |
+| POST | `/{id}/attachments` | owner/admin | Multipart image/video upload → `201` |
+| GET | `/{id}/attachments/{attachmentId}` | owner/admin | Download attachment |
+| DELETE | `/{id}/attachments/{attachmentId}` | owner/admin | Delete attachment and audit it |
+
+List filters: `keyword`, `status`, `priority`, `project`, `department`, `spoc`,
+`createdFrom`, `createdTo`, plus standard pagination and sorting.
+
+Create request:
+
+```json
+{
+  "subject": "Unit will not power on",
+  "description": "The indicator stays dark after reconnecting power.",
+  "project": "Pilot A",
+  "customerEmail": "customer@example.com",
+  "priority": "HIGH",
+  "spocEmail": "spoc@takachar.com",
+  "diagnosticSessionId": "31af18b3-fc14-43b0-b6d7-da824b90c392",
+  "suggestedArticleId": 12
+}
+```
+
+`customerEmail` is honored only for admin-created tickets. A diagnostic session
+and direct `suggestedArticleId` are optional; a session's own suggestion wins.
+Ticket status values are `OPEN`, `IN_PROGRESS`, `WAITING_FOR_CUSTOMER`,
+`WAITING_FOR_LOGISTICS`, `RESOLVED`, and `CLOSED`. Health is returned as
+`GREEN`, `YELLOW`, or `RED`.
+
+## Feedback sentiment
+
+Feedback responses now include `sentiment`, `sentimentConfidence`,
+`sentimentModel`, and `sentimentAnalyzedAt`. New feedback is analysed on
+submission. Admins can retry with `POST /api/feedback/{id}/sentiment`.
+
+## Existing page endpoints (unchanged)
 
 `/api/feedback` (CRUD) and the Thymeleaf pages (`/`, `/login`, `/register`,
 `/admin/home`, `/customer/home`, `/customer/feedback`) are untouched by this
