@@ -4,8 +4,10 @@ import com.example.demo.dto.PageResponse;
 import com.example.demo.dto.dashboard.ActivityDto;
 import com.example.demo.model.Feedback;
 import com.example.demo.model.KnowledgeArticle;
+import com.example.demo.model.SupportTicket;
 import com.example.demo.repository.FeedbackRepository;
 import com.example.demo.repository.KnowledgeArticleRepository;
+import com.example.demo.repository.SupportTicketRepository;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,11 +28,14 @@ public class ActivityService {
 
     private final FeedbackRepository feedbackRepository;
     private final KnowledgeArticleRepository articleRepository;
+    private final SupportTicketRepository ticketRepository;
 
     public ActivityService(FeedbackRepository feedbackRepository,
-                           KnowledgeArticleRepository articleRepository) {
+                           KnowledgeArticleRepository articleRepository,
+                           SupportTicketRepository ticketRepository) {
         this.feedbackRepository = feedbackRepository;
         this.articleRepository = articleRepository;
+        this.ticketRepository = ticketRepository;
     }
 
     @Transactional(readOnly = true)
@@ -70,6 +75,12 @@ public class ActivityService {
             events.add(new ActivityDto(created ? "ARTICLE_CREATED" : "ARTICLE_UPDATED",
                     "Article \"" + truncate(a.getTitle()) + "\" " + (created ? "created" : "updated"),
                     a.getId(), a.getLastModifiedBy(), a.getUpdatedAt()));
+        }
+
+        for (SupportTicket ticket : ticketRepository.findTop20ByOrderByCreatedAtDesc()) {
+            events.add(new ActivityDto("TICKET_CREATED",
+                    "Ticket " + ticket.getReferenceNumber() + " created (" + ticket.getStatus() + ")",
+                    ticket.getId(), ticket.getCustomerEmail(), ticket.getCreatedAt()));
         }
 
         return events;

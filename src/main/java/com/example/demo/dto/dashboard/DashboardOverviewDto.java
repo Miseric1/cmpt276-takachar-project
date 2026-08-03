@@ -5,7 +5,7 @@ package com.example.demo.dto.dashboard;
  * staff want at a glance. Always reflects the latest database state.
  */
 public record DashboardOverviewDto(
-        // Tickets (from the ticket provider; zero until Ticketing ships)
+        // Tickets
         long totalTickets,
         long openTickets,
         long overdueTickets,

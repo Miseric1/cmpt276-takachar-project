@@ -93,4 +93,24 @@ class ApiSecurityTest {
     void adminCanViewDashboard() throws Exception {
         mockMvc.perform(get("/api/dashboard/overview")).andExpect(status().isOk());
     }
+
+    @Test
+    void publicRegistrationIsDisabled() throws Exception {
+        mockMvc.perform(get("/register")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "CUSTOMER")
+    void customerCannotCreateAnotherCustomerAccount() throws Exception {
+        mockMvc.perform(post("/api/admin/customers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"new@example.com\",\"password\":\"password123\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "CUSTOMER")
+    void customerCannotListEveryFeedbackSubmission() throws Exception {
+        mockMvc.perform(get("/api/feedback")).andExpect(status().isForbidden());
+    }
 }

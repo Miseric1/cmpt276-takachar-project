@@ -1,7 +1,9 @@
 package com.example.demo.service;
 
 import com.example.demo.model.Feedback;
+import com.example.demo.model.SubmissionType;
 import com.example.demo.repository.FeedbackRepository;
+import org.springframework.data.domain.Sort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -56,6 +58,21 @@ class FeedbackServiceTest {
 
         assertThat(result.getStatus()).isEqualTo("OPEN");
         assertThat(result.getId()).isEqualTo(1L);
+        assertThat(input.getType()).isEqualTo(SubmissionType.FEEDBACK);
+    }
+
+    @Test
+    void shouldFilterComplaintsWithRequestedSort() {
+        Feedback complaint = new Feedback("Service", "P1", "A1", "Missed pickup", "U1",
+                SubmissionType.COMPLAINT);
+        when(feedbackRepository.findByType(eq(SubmissionType.COMPLAINT), any(Sort.class)))
+                .thenReturn(List.of(complaint));
+
+        List<Feedback> result = feedbackService.search(
+                SubmissionType.COMPLAINT, "type", Sort.Direction.ASC);
+
+        assertThat(result).containsExactly(complaint);
+        verify(feedbackRepository).findByType(eq(SubmissionType.COMPLAINT), any(Sort.class));
     }
 
     @Test

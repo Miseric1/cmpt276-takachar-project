@@ -16,7 +16,6 @@
         <main class="actions">
             <div sec:authorize="isAnonymous()" class="auth-buttons">
                 <a th:href="@{/login}" class="btn btn-primary">Log In</a>
-                <a th:href="@{/register}" class="btn btn-secondary">Register</a>
             </div>
             
             <div sec:authorize="isAuthenticated()" class="dashboard-actions">

@@ -9,7 +9,7 @@ authentication, or the Thymeleaf pages.
 ## Stack (unchanged)
 
 Java 17 · Spring Boot 3.2.5 · Spring Data JPA · Spring Security · PostgreSQL
-(Supabase in prod, H2 in dev/test) · Docker · Render.
+(Supabase by default, H2 only in the explicit local profile and tests) · Docker · Render.
 
 ## Layering
 
@@ -90,11 +90,11 @@ increments `version`, so history is never overwritten.
 
 ## Ticketing integration seam
 
-Tickets are not built this iteration. `TicketAnalyticsProvider` is the seam: the
-`EmptyTicketAnalyticsProvider` returns zeroed stats today, and a future ticket
-module supplies a `@Primary` implementation to light up ticket analytics with no
-change to the dashboard API or the frontend. Knowledge entities already carry
-the fields (ids, view/helpful counts) a ticketing module would reference.
+The original iteration introduced `TicketAnalyticsProvider` as an integration
+seam. The ticketing backend now supplies `TicketAnalyticsService`, so existing
+dashboard contracts report live ticket counts, SLA health, response/resolution
+times, priority/status breakdowns, and FAQ automatic-resolution rate. See
+`TICKETING_BACKEND.md` for the current domain and API design.
 
 ## Testing
 
