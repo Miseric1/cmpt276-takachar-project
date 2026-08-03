@@ -10,9 +10,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+/**
+ * Ticket-workflow metadata retained for historical diagnostic sessions.
+ * PR #17 owns the primary {@link DiagnosticOption} tree model.
+ */
 @Entity
-@Table(name = "diagnostic_options")
-public class DiagnosticOption {
+@Table(name = "workflow_diagnostic_options")
+public class WorkflowDiagnosticOption {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

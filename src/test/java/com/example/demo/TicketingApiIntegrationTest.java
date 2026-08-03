@@ -2,7 +2,7 @@ package com.example.demo;
 
 import com.example.demo.dto.knowledge.KnowledgeRequest;
 import com.example.demo.dto.knowledge.KnowledgeResponse;
-import com.example.demo.model.DiagnosticOption;
+import com.example.demo.model.WorkflowDiagnosticOption;
 import com.example.demo.model.DiagnosticQuestion;
 import com.example.demo.model.Feedback;
 import com.example.demo.model.PublicationStatus;
@@ -116,7 +116,7 @@ class TicketingApiIntegrationTest {
         root.setCategory("Test diagnostics");
         root.setRootQuestion(true);
         root.setActive(true);
-        DiagnosticOption option = new DiagnosticOption();
+        WorkflowDiagnosticOption option = new WorkflowDiagnosticOption();
         option.setQuestion(root);
         option.setLabel("Power system");
         option.setValue("power");

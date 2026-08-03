@@ -44,7 +44,7 @@ public class DiagnosticQuestion {
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC, id ASC")
-    private List<DiagnosticOption> options = new ArrayList<>();
+    private List<WorkflowDiagnosticOption> options = new ArrayList<>();
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -60,6 +60,6 @@ public class DiagnosticQuestion {
     public void setActive(boolean active) { this.active = active; }
     public KnowledgeArticle getSuggestedArticle() { return suggestedArticle; }
     public void setSuggestedArticle(KnowledgeArticle suggestedArticle) { this.suggestedArticle = suggestedArticle; }
-    public List<DiagnosticOption> getOptions() { return options; }
-    public void setOptions(List<DiagnosticOption> options) { this.options = options; }
+    public List<WorkflowDiagnosticOption> getOptions() { return options; }
+    public void setOptions(List<WorkflowDiagnosticOption> options) { this.options = options; }
 }

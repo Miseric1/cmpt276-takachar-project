@@ -3,7 +3,7 @@ package com.example.demo;
 import com.example.demo.dto.knowledge.KnowledgeRequest;
 import com.example.demo.dto.knowledge.KnowledgeSummary;
 import com.example.demo.model.PublicationStatus;
-import com.example.demo.model.DiagnosticOption;
+import com.example.demo.model.WorkflowDiagnosticOption;
 import com.example.demo.model.DiagnosticQuestion;
 import com.example.demo.model.KnowledgeArticle;
 import com.example.demo.model.User;
@@ -169,9 +169,9 @@ public class DataInitializer {
         return question;
     }
 
-    private static DiagnosticOption option(DiagnosticQuestion question, String label, String value,
+    private static WorkflowDiagnosticOption option(DiagnosticQuestion question, String label, String value,
                                            int order, DiagnosticQuestion next) {
-        DiagnosticOption option = new DiagnosticOption();
+        WorkflowDiagnosticOption option = new WorkflowDiagnosticOption();
         option.setQuestion(question);
         option.setLabel(label);
         option.setValue(value);

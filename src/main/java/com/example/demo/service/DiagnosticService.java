@@ -12,7 +12,7 @@ import com.example.demo.exception.InvalidStateException;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.mapper.DiagnosticMapper;
 import com.example.demo.model.DiagnosticAnswer;
-import com.example.demo.model.DiagnosticOption;
+import com.example.demo.model.WorkflowDiagnosticOption;
 import com.example.demo.model.DiagnosticQuestion;
 import com.example.demo.model.DiagnosticSession;
 import com.example.demo.model.DiagnosticSessionStatus;
@@ -83,7 +83,7 @@ public class DiagnosticService {
             throw new InvalidStateException("The answer does not match the session's current question.");
         }
 
-        DiagnosticOption selected = null;
+        WorkflowDiagnosticOption selected = null;
         if (request.optionId() != null) {
             selected = question.getOptions().stream()
                     .filter(option -> option.getId().equals(request.optionId()))
@@ -205,10 +205,10 @@ public class DiagnosticService {
 
         questionRepository.save(question);
         question.getOptions().clear();
-        List<DiagnosticOption> options = new ArrayList<>();
+        List<WorkflowDiagnosticOption> options = new ArrayList<>();
         if (request.options() != null) {
             for (DiagnosticOptionRequest optionRequest : request.options()) {
-                DiagnosticOption option = new DiagnosticOption();
+                WorkflowDiagnosticOption option = new WorkflowDiagnosticOption();
                 option.setQuestion(question);
                 option.setLabel(optionRequest.label().trim());
                 option.setValue(optionRequest.value().trim());
