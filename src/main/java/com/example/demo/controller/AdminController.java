@@ -76,4 +76,14 @@ public class AdminController {
 
         return "admin-tickets";
     }
+
+    @GetMapping("/admin/tree")
+    public String diagnosticTree(
+            @AuthenticationPrincipal UserDetails userDetails,
+            Model model
+    ) {
+        model.addAttribute("email", userDetails.getUsername());
+
+        return "admin-tree";
+    }
 }
