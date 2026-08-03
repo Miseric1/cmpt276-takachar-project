@@ -19,7 +19,8 @@
     let editMode    = false;
     let currentId   = null;
     let navHistory  = [];     // stack of node IDs visited
-    
+    let clickedOptions = [];
+
     // ── Helpers ──────────────────────────────────────────────────
     const uid   = ()  => crypto.randomUUID();
     const clone = (x) => JSON.parse(JSON.stringify(x));
@@ -116,6 +117,10 @@
     }
     
     // ── Navigation ───────────────────────────────────────────────
+    function setClickedOption(label) {
+        clickedOptions.push(label);
+    }
+
     function go(nextId) {
         if (!nextId) { toast('This option is unlinked — connect it in Edit mode'); return; }
         navHistory.push(currentId);
@@ -126,6 +131,7 @@
     function back() {
         if (!navHistory.length) return;
         currentId = navHistory.pop();
+        clickedOptions.pop();
         render();
     }
     
@@ -285,18 +291,7 @@
     }
     
     function renderTopBar() {
-        const parts = ['Start'];
-    
-        [...navHistory, currentId].forEach(id => {
-            const n = N(id);
-            if (!n) return;
-    
-            const label = n.type === 'resolution'
-                ? 'Resolution'
-                : n.text;
-    
-            parts.push(label);
-        });
+        const parts = ['Start', ...clickedOptions];
     
         const bcHtml = parts.map((p, i) =>
             i < parts.length - 1
@@ -342,15 +337,16 @@
         const ticketBtn = IS_CUSTOMER ? `
             <div class="dt-ticket-section">
                 <div class="dt-ticket-content">
+                <div class="dt-ticket-icon">⚠️</div>
                     <div class="dt-ticket-copy">
-                        <strong>Still having trouble?</strong>
+                        <strong>Issue not resolved?</strong>
                         <span>If this solution didn't resolve your issue, our support team can help.</span>
                     </div>
                 </div>
         
                 <button class="dt-ticket-btn"
                         onclick="">
-                    + New Ticket
+                    Raise a Ticket
                 </button>
             </div>
         ` : '';
@@ -375,10 +371,10 @@
                         </select>
                     </div>
                 ` : ''}
-
-                ${ticketBtn}
                 ${editBar}
-            </div>`;
+            </div>
+            ${ticketBtn}
+            `;
     }
     
     function renderQuestion(area, n) {
@@ -435,14 +431,13 @@
                     </div>
                 </div>`;
             }
-
     
             // Preview mode
             return `
                 <div class="dt-opt"
                      role="button" tabindex="0"
-                     onclick="DT.go('${o.nextId ?? ''}')"
-                     onkeydown="if(event.key==='Enter'||event.key===' ')DT.go('${o.nextId ?? ''}')">
+                     onclick="DT.setClickedOption('${escA(o.label)}'); DT.go('${o.nextId ?? ''}')"
+                     onkeydown="if(event.key==='Enter'||event.key===' ') { DT.setClickedOption('${escA(o.label)}'); DT.go('${o.nextId ?? ''}'); }">
                     <span class="dt-letter">${ltr}</span>
                     <span class="dt-opt-label">${esc(o.label)}</span>
                     ${o.nextId
@@ -498,7 +493,7 @@
                     onclick="DT.saveChanges()">Save changes</button>
             ` : ''}`;
     }
-    
+  
     // ── Edit toggle ───────────────────────────────────────────────
     const editBtn = document.getElementById('dtEditBtn');
 
@@ -533,6 +528,7 @@
     // ── Public API (used by inline onclick handlers) ──────────────
     window.DT = {
         go, back,
+        setClickedOption,
         setNodeText, setOptLabel,
         addOption, deleteOption,
         addQuestion, addResolution,
