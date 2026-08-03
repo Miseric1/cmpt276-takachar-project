@@ -342,7 +342,6 @@
         const ticketBtn = IS_CUSTOMER ? `
             <div class="dt-ticket-section">
                 <div class="dt-ticket-content">
-                    <div class="dt-ticket-icon">🎫</div>
                     <div class="dt-ticket-copy">
                         <strong>Still having trouble?</strong>
                         <span>If this solution didn't resolve your issue, our support team can help.</span>
