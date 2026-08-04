@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Customer credential management performed by the administrator acting as SPOC. */
+/** Role-based account management performed by an administrator acting as SPOC. */
 @RestController
 @RequestMapping("/api/admin/customers")
 public class CustomerAccountController {

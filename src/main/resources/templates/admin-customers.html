@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Access | Takachar</title>
+    <title>Account Access | Takachar</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <script defer th:src="@{/js/spoc-customers.js}"></script>
 </head>
@@ -35,7 +35,7 @@
             </a>
             <a class="admin-nav-link admin-nav-link--active" th:href="@{/admin/customers}">
                 <span class="admin-nav-icon">●</span>
-                Customer accounts
+                Account access
             </a>
             <a class="admin-nav-link" th:href="@{/admin/tree}">
                 <span class="admin-nav-icon">⌘</span>
@@ -55,7 +55,7 @@
         <header class="admin-header">
             <div>
                 <p class="admin-header-label">SPOC workspace</p>
-                <h1>Customer account access</h1>
+                <h1>Account access</h1>
             </div>
 
             <div class="admin-profile">
@@ -72,9 +72,9 @@
 
         <section class="admin-summary-grid spoc-summary-grid">
             <article class="admin-summary-card admin-summary-card--green">
-                <p>Provisioned customers</p>
+                <p>Provisioned accounts</p>
                 <strong id="spoc-customer-count">—</strong>
-                <span>Accounts that can access the customer workspace</span>
+                <span>Customer and administrator access</span>
             </article>
 
             <article class="admin-summary-card">
@@ -88,8 +88,8 @@
             <section class="admin-panel">
                 <div class="admin-panel-header">
                     <div>
-                        <h2>Create customer access</h2>
-                        <p>Issue login credentials after the customer has been approved by the SPOC.</p>
+                        <h2>Create account access</h2>
+                        <p>Issue login credentials and select the account's access level.</p>
                     </div>
                 </div>
 
@@ -97,7 +97,7 @@
 
                 <form id="spoc-customer-form" class="spoc-customer-form">
                     <div class="form-group">
-                        <label for="spoc-customer-email">Customer email</label>
+                        <label for="spoc-customer-email">Account email</label>
                         <input
                                 id="spoc-customer-email"
                                 name="email"
@@ -120,11 +120,20 @@
                                 placeholder="At least 8 characters"
                                 required
                         >
-                        <p class="spoc-field-help">The password is securely hashed and is never shown in the customer list.</p>
+                        <p class="spoc-field-help">The password is securely hashed and is never shown in the account list.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="spoc-account-role">Account role</label>
+                        <select id="spoc-account-role" name="role" required>
+                            <option value="CUSTOMER" selected>Customer</option>
+                            <option value="ADMIN">Administrator</option>
+                        </select>
+                        <p class="spoc-field-help">Administrators can manage accounts and access the complete staff workspace.</p>
                     </div>
 
                     <button id="spoc-create-button" type="submit" class="btn btn-primary">
-                        Create customer account
+                        Create account
                     </button>
                 </form>
             </section>
@@ -132,21 +141,21 @@
             <section class="admin-panel">
                 <div class="admin-panel-header">
                     <div>
-                        <h2>Customer accounts</h2>
-                        <p>Review the customers who currently have access.</p>
+                        <h2>Provisioned accounts</h2>
+                        <p>Review every account and its current access level.</p>
                     </div>
                     <span class="admin-feedback-count" id="spoc-list-count">Loading…</span>
                 </div>
 
                 <div id="spoc-list-error" class="spoc-form-message spoc-form-message--error" role="alert" hidden>
-                    Customer accounts could not be loaded. Refresh the page to try again.
+                    Accounts could not be loaded. Refresh the page to try again.
                 </div>
 
                 <div id="spoc-customer-empty" class="admin-empty-state" hidden>
                     <div class="admin-empty-icon">●</div>
                     <div>
-                        <h3>No customer accounts yet</h3>
-                        <p>Create the first customer account using the form.</p>
+                        <h3>No accounts yet</h3>
+                        <p>Create the first account using the form.</p>
                     </div>
                 </div>
 

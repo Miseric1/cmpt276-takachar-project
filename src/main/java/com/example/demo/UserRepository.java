@@ -10,7 +10,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmailIgnoreCase(String email);
 
-    List<User> findAllByRoleIgnoreCaseOrderByEmailAsc(String role);
+    List<User> findAllByOrderByEmailAsc();
 
     // Dashboard analytics: how many customers vs staff exist.
     long countByRoleIgnoreCase(String role);

@@ -250,18 +250,20 @@ Responses also include `sentiment`, `sentimentConfidence`,
 `sentimentModel`, and `sentimentAnalyzedAt`. New feedback is analysed on
 submission. Admins can retry with `POST /api/feedback/{id}/sentiment`.
 
-## Customer accounts — `/api/admin/customers`
+## Role-based accounts — `/api/admin/customers`
 
 Public registration is disabled. An administrator acting as the SPOC manages
-customer credentials:
+credentials and selects the access role:
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/admin/customers` | Create a customer from `{email,password}` → `201` |
-| GET | `/api/admin/customers` | List customer accounts without password data |
+| POST | `/api/admin/customers` | Create an account from `{email,password,role}` → `201` |
+| GET | `/api/admin/customers` | List provisioned accounts without password data |
 
 Passwords must be 8–72 characters, are stored as BCrypt hashes, and are never
-returned. Duplicate emails return `409`.
+returned. `role` accepts `CUSTOMER` or `ADMIN`; all other values are
+rejected. Duplicate emails return `409`. Only an existing administrator can use
+these endpoints, so non-administrators cannot create or promote accounts.
 
 ## Existing page endpoints
 

@@ -110,8 +110,9 @@ Notifications are transaction-aware: email is attempted only after ticket data
 commits, and a provider outage never rolls back a ticket. Events cover creation,
 SPOC notification, assignment, status changes, and resolution.
 
-Email is logged locally by default. Resend is the production provider. Either
-set the values in the deployment environment or copy
+Email is logged by default in every environment so a deployment can start
+without email credentials. To use Resend in production, either set the values
+in the deployment environment or copy
 `application-secrets.properties.example` to the ignored
 `application-secrets.properties` file and paste the generated key there:
 

@@ -11,9 +11,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -32,7 +34,9 @@ class CustomerAccountApiIntegrationTest {
         mockMvc.perform(get("/admin/customers")
                         .with(user("spoc@takachar.com").roles("ADMIN")))
                 .andExpect(status().isOk())
-                .andExpect(view().name("admin-customers"));
+                .andExpect(view().name("admin-customers"))
+                .andExpect(content().string(containsString("Account role")))
+                .andExpect(content().string(containsString("Administrator")));
     }
 
     @Test
@@ -40,7 +44,7 @@ class CustomerAccountApiIntegrationTest {
         mockMvc.perform(post("/api/admin/customers")
                         .with(user("spoc@takachar.com").roles("ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"Customer@Example.com\",\"password\":\"temporary123\"}"))
+                        .content("{\"email\":\"Customer@Example.com\",\"password\":\"temporary123\",\"role\":\"CUSTOMER\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("customer@example.com"))
                 .andExpect(jsonPath("$.role").value("CUSTOMER"))
@@ -57,8 +61,54 @@ class CustomerAccountApiIntegrationTest {
     }
 
     @Test
+    void omittedRoleRemainsBackwardCompatibleAndCreatesCustomer() throws Exception {
+        mockMvc.perform(post("/api/admin/customers")
+                        .with(user("spoc@takachar.com").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"legacy-customer@example.com\",\"password\":\"temporary123\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.role").value("CUSTOMER"));
+
+        assertThat(userRepository.findByEmail("legacy-customer@example.com").orElseThrow().getRole())
+                .isEqualTo("CUSTOMER");
+    }
+
+    @Test
+    void adminCanCreateAnotherAdministratorAccount() throws Exception {
+        mockMvc.perform(post("/api/admin/customers")
+                        .with(user("spoc@takachar.com").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"new-admin@example.com\",\"password\":\"temporary123\",\"role\":\"admin\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.role").value("ADMIN"));
+
+        assertThat(userRepository.findByEmail("new-admin@example.com").orElseThrow().getRole()).isEqualTo("ADMIN");
+    }
+
+    @Test
+    void unsupportedRoleIsRejectedWithoutCreatingAccount() throws Exception {
+        mockMvc.perform(post("/api/admin/customers")
+                        .with(user("spoc@takachar.com").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"owner@example.com\",\"password\":\"temporary123\",\"role\":\"OWNER\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'role')]").exists());
+
+        assertThat(userRepository.findByEmail("owner@example.com")).isEmpty();
+    }
+
+    @Test
+    void supportAgentCannotProvisionPrivilegedAccounts() throws Exception {
+        mockMvc.perform(post("/api/admin/customers")
+                        .with(user("agent@takachar.com").roles("AGENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"blocked-admin@example.com\",\"password\":\"temporary123\",\"role\":\"ADMIN\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void duplicateCustomerEmailIsRejectedCaseInsensitively() throws Exception {
-        String body = "{\"email\":\"duplicate@example.com\",\"password\":\"temporary123\"}";
+        String body = "{\"email\":\"duplicate@example.com\",\"password\":\"temporary123\",\"role\":\"CUSTOMER\"}";
         mockMvc.perform(post("/api/admin/customers")
                         .with(user("spoc@takachar.com").roles("ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON).content(body))
@@ -67,7 +117,7 @@ class CustomerAccountApiIntegrationTest {
         mockMvc.perform(post("/api/admin/customers")
                         .with(user("spoc@takachar.com").roles("ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"DUPLICATE@example.com\",\"password\":\"temporary456\"}"))
+                        .content("{\"email\":\"DUPLICATE@example.com\",\"password\":\"temporary456\",\"role\":\"ADMIN\"}"))
                 .andExpect(status().isConflict());
     }
 }

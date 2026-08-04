@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadCustomers = async () => {
         try {
             const response = await fetch('/api/admin/customers', { credentials: 'same-origin' });
-            if (!response.ok) throw new Error('Could not load customer accounts');
+            if (!response.ok) throw new Error('Could not load accounts');
             renderCustomers(await response.json());
         } catch (error) {
             customerCount.textContent = '—';
@@ -71,7 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const payload = {
             email: form.elements.email.value.trim(),
-            password: form.elements.password.value
+            password: form.elements.password.value,
+            role: form.elements.role.value
         };
 
         try {
@@ -84,18 +85,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!response.ok) {
                 const body = await response.json().catch(() => ({}));
-                throw new Error(body.message || 'The customer account could not be created.');
+                throw new Error(body.message || 'The account could not be created.');
             }
 
             const customer = await response.json();
             form.reset();
-            showFormMessage(`Access created for ${customer.email}.`, false);
+            const roleLabel = customer.role.toLowerCase();
+            showFormMessage(`${roleLabel.charAt(0).toUpperCase() + roleLabel.slice(1)} access created for ${customer.email}.`, false);
             await loadCustomers();
         } catch (error) {
             showFormMessage(error.message, true);
         } finally {
             createButton.disabled = false;
-            createButton.textContent = 'Create customer account';
+            createButton.textContent = 'Create account';
         }
     });
 
