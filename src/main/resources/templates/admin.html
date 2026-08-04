@@ -139,6 +139,39 @@
 
         </section>
 
+        <!-- Recurring feedback themes -->
+        <section class="admin-panel">
+
+            <div class="admin-panel-header">
+                <div>
+                    <h2>Recurring themes</h2>
+                    <p>Topics mentioned across multiple feedback submissions.</p>
+                </div>
+
+                <a class="admin-secondary-button" th:href="@{/admin/feedback}">
+                    Open feedback tracker
+                </a>
+            </div>
+
+            <p class="theme-empty" th:if="${#lists.isEmpty(themes)}">
+                Not enough feedback yet to spot recurring themes.
+            </p>
+
+            <div class="theme-chip-row" th:unless="${#lists.isEmpty(themes)}">
+
+                <span
+                        class="theme-chip"
+                        th:each="theme : ${themes}"
+                        th:classappend="${theme.bySentiment.getOrDefault('NEGATIVE', 0L) * 2 >= theme.mentionCount} ? 'theme-chip--negative'"
+                >
+                    <strong th:text="${theme.term}">battery life</strong>
+                    <span class="theme-chip-count" th:text="${theme.mentionCount}">3</span>
+                </span>
+
+            </div>
+
+        </section>
+
         <!-- Quick ticket preview -->
         <section class="admin-panel">
 
