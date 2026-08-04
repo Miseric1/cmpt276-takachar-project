@@ -56,15 +56,6 @@
 
         </nav>
 
-        <div class="admin-sidebar-bottom">
-
-            <a class="admin-nav-link" th:href="@{/customer/home}">
-                <span class="admin-nav-icon">⇆</span>
-                View as customer
-            </a>
-
-        </div>
-
     </aside>
 
     <main class="admin-main">
@@ -165,7 +156,7 @@
                     <input
                             id="feedback-search"
                             type="search"
-                            placeholder="Search project, account, customer, or description..."
+                            placeholder="Search project, account, customer, or category..."
                     >
 
                 </div>
@@ -260,7 +251,10 @@
                     <div class="feedback-card-meta">
 
                         <div class="feedback-meta-item">
-                            <span class="feedback-meta-label">Account</span>
+
+                            <span class="feedback-meta-label">
+                                Account
+                            </span>
 
                             <strong
                                     class="feedback-meta-value"
@@ -268,10 +262,14 @@
                             >
                                 Account
                             </strong>
+
                         </div>
 
                         <div class="feedback-meta-item">
-                            <span class="feedback-meta-label">Submitted by</span>
+
+                            <span class="feedback-meta-label">
+                                Submitted by
+                            </span>
 
                             <strong
                                     class="feedback-meta-value"
@@ -279,10 +277,14 @@
                             >
                                 customer@example.com
                             </strong>
+
                         </div>
 
                         <div class="feedback-meta-item">
-                            <span class="feedback-meta-label">Submitted</span>
+
+                            <span class="feedback-meta-label">
+                                Submitted
+                            </span>
 
                             <strong
                                     class="feedback-meta-value"
@@ -293,22 +295,8 @@
                             >
                                 Aug 3, 2026
                             </strong>
+
                         </div>
-
-                    </div>
-
-                    <div class="feedback-card-description">
-
-                        <span class="feedback-meta-label">
-                            Description
-                        </span>
-
-                        <p
-                                class="feedback-description-preview"
-                                th:text="${feedback.description}"
-                        >
-                            Feedback description
-                        </p>
 
                     </div>
 
@@ -394,42 +382,42 @@
 
         function filterFeedback() {
             const searchValue =
-                searchInput.value.trim().toLowerCase();
+                    searchInput.value.trim().toLowerCase();
 
             const selectedStatus =
-                statusFilter.value.toLowerCase();
+                    statusFilter.value.toLowerCase();
 
             const selectedCategory =
-                categoryFilter.value.toLowerCase();
+                    categoryFilter.value.toLowerCase();
 
             let visibleCards = 0;
 
             cards.forEach(card => {
                 const cardText =
-                    card.textContent.toLowerCase();
+                        card.textContent.toLowerCase();
 
                 const cardStatus =
-                    (card.dataset.status || "").toLowerCase();
+                        (card.dataset.status || "").toLowerCase();
 
                 const cardCategory =
-                    (card.dataset.category || "").toLowerCase();
+                        (card.dataset.category || "").toLowerCase();
 
                 const matchesSearch =
-                    !searchValue ||
-                    cardText.includes(searchValue);
+                        !searchValue ||
+                        cardText.includes(searchValue);
 
                 const matchesStatus =
-                    !selectedStatus ||
-                    cardStatus === selectedStatus;
+                        !selectedStatus ||
+                        cardStatus === selectedStatus;
 
                 const matchesCategory =
-                    !selectedCategory ||
-                    cardCategory === selectedCategory;
+                        !selectedCategory ||
+                        cardCategory === selectedCategory;
 
                 const isVisible =
-                    matchesSearch &&
-                    matchesStatus &&
-                    matchesCategory;
+                        matchesSearch &&
+                        matchesStatus &&
+                        matchesCategory;
 
                 card.hidden = !isVisible;
 
