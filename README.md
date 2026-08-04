@@ -91,7 +91,8 @@ The backend now includes the guided diagnostic tree, published FAQ matching,
 support-ticket lifecycle and audit trail, customer/admin access boundaries,
 SPOC and customer email events with Resend or SMTP delivery, image/video
 attachments, complaint/feedback classification, SPOC-managed customer accounts,
-live ticket dashboard analytics, and Hugging Face feedback sentiment classification. See
+administrator-selected customer or administrator roles,
+ticket dashboard analytics, and Hugging Face feedback sentiment classification. See
 [`docs/TICKETING_BACKEND.md`](docs/TICKETING_BACKEND.md) for configuration and
 [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md) for frontend integration.
 
