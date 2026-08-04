@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.Feedback;
+import com.example.demo.model.SubmissionType;
 import com.example.demo.service.FeedbackService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -57,6 +58,36 @@ public class CustomerController {
 
         feedbackService.createFeedback(feedback);
         return "redirect:/customer/feedback?submitted";
+    }
+
+    @GetMapping("/customer/complaint")
+    public String complaintPage(
+            @AuthenticationPrincipal UserDetails userDetails,
+            Model model
+    ) {
+        model.addAttribute("email", userDetails.getUsername());
+        return "customer-complaint";
+    }
+
+    @PostMapping("/customer/complaint")
+    public String submitComplaint(
+            @RequestParam String category,
+            @RequestParam String project,
+            @RequestParam String account,
+            @RequestParam String description,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        Feedback complaint = new Feedback(
+                category,
+                project,
+                account,
+                description,
+                userDetails.getUsername(),
+                SubmissionType.COMPLAINT
+        );
+
+        feedbackService.createFeedback(complaint);
+        return "redirect:/customer/complaint?submitted";
     }
 
     @GetMapping("/customer/faq")

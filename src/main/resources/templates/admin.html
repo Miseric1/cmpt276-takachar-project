@@ -49,8 +49,13 @@
                 Support tickets
             </a>
 
+            <a class="admin-nav-link" th:href="@{/admin/customers}">
+                <span class="admin-nav-icon">●</span>
+                Customer accounts
+            </a>
+
             <a class="admin-nav-link" th:href="@{/admin/tree}">
-                <span class="admin-nav-icon">▱</span>
+                <span class="admin-nav-icon">⌘</span>
                 Diagnostic Tree
             </a>
 
@@ -128,24 +133,56 @@
 
                 <p>Overdue tickets</p>
 
-                <strong>0</strong>
+                <strong th:text="${overdueTickets}">0</strong>
 
-                <span>Ticket system coming soon</span>
-
+                <span>Past target resolution date</span>
             </article>
 
             <article class="admin-summary-card admin-summary-card--green">
 
                 <p>Resolved tickets</p>
 
-                <strong>0</strong>
+                <strong th:text="${resolvedTickets}">0</strong>
 
-                <span>Ticket system coming soon</span>
-
+                <span>Marked resolved</span>
             </article>
 
         </section>
 
+        <!-- Recurring feedback themes -->
+        <section class="admin-panel">
+
+            <div class="admin-panel-header">
+                <div>
+                    <h2>Recurring themes</h2>
+                    <p>Topics mentioned across multiple feedback submissions.</p>
+                </div>
+
+                <a class="admin-secondary-button" th:href="@{/admin/feedback}">
+                    Open feedback tracker
+                </a>
+            </div>
+
+            <p class="theme-empty" th:if="${#lists.isEmpty(themes)}">
+                Not enough feedback yet to spot recurring themes.
+            </p>
+
+            <div class="theme-chip-row" th:unless="${#lists.isEmpty(themes)}">
+
+                <span
+                        class="theme-chip"
+                        th:each="theme : ${themes}"
+                        th:classappend="${theme.bySentiment.getOrDefault('NEGATIVE', 0L) * 2 >= theme.mentionCount} ? 'theme-chip--negative'"
+                >
+                    <strong th:text="${theme.term}">battery life</strong>
+                    <span class="theme-chip-count" th:text="${theme.mentionCount}">3</span>
+                </span>
+
+            </div>
+
+        </section>
+
+        <!-- Quick ticket preview -->
         <section class="admin-panel">
 
             <div class="admin-panel-header">
@@ -164,18 +201,82 @@
 
             </div>
 
-            <div class="admin-empty-state">
+            <p
+                    class="admin-empty-message"
+                    th:if="${#lists.isEmpty(activeTickets)}"
+            >
+                No open tickets right now.
+            </p>
 
-                <div class="admin-empty-icon">▱</div>
+            <div
+                    class="admin-table-wrapper"
+                    th:unless="${#lists.isEmpty(activeTickets)}"
+            >
 
-                <div>
-                    <h3>No support tickets yet</h3>
+                <table class="admin-feedback-table">
 
-                    <p>
-                        Ticket information will appear here once the support-ticket
-                        workflow is connected.
-                    </p>
-                </div>
+                    <thead>
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Customer</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Target resolution</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+
+                    <tr th:each="ticket : ${activeTickets}">
+
+                        <td>
+                            <span class="ticket-ref" th:text="${ticket.referenceNumber}">
+                                TKT-0000
+                            </span>
+                            <span th:text="${ticket.subject}">Subject</span>
+                        </td>
+
+                        <td th:text="${ticket.customerEmail}">
+                            customer@example.com
+                        </td>
+
+                        <td>
+                            <span
+                                    th:text="${ticket.priority}"
+                                    th:class="'ticket-priority-badge ticket-priority-' + ${#strings.toLowerCase(ticket.priority)}"
+                            >
+                                MEDIUM
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="ticket-status-cell">
+                                <span
+                                        class="ticket-health-dot"
+                                        th:classappend="'ticket-health-' + ${#strings.toLowerCase(ticket.health)}"
+                                ></span>
+                                <span
+                                        th:text="${ticket.status}"
+                                        th:class="'ticket-status-badge ticket-status-' + ${#strings.toLowerCase(ticket.status)}"
+                                >
+                                    OPEN
+                                </span>
+                            </span>
+                        </td>
+
+                        <td
+                                th:if="${ticket.targetResolutionAt != null}"
+                                th:text="${#temporals.format(ticket.targetResolutionAt, 'MMM d, yyyy, h:mm a')}"
+                        >
+                            Aug 6, 2026, 7:45 PM
+                        </td>
+                        <td th:unless="${ticket.targetResolutionAt != null}">—</td>
+
+                    </tr>
+
+                    </tbody>
+
+                </table>
 
             </div>
 

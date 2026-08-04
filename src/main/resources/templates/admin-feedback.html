@@ -49,8 +49,13 @@
                 Support tickets
             </a>
 
+            <a class="admin-nav-link" th:href="@{/admin/customers}">
+                <span class="admin-nav-icon">●</span>
+                Customer accounts
+            </a>
+
             <a class="admin-nav-link" th:href="@{/admin/tree}">
-                <span class="admin-nav-icon">▱</span>
+                <span class="admin-nav-icon">⌘</span>
                 Diagnostic Tree
             </a>
 
@@ -126,6 +131,77 @@
 
         </section>
 
+        <!-- Recurring feedback themes -->
+        <section class="admin-panel">
+
+            <div class="admin-panel-header">
+
+                <div>
+                    <h2>Recurring themes</h2>
+
+                    <p>
+                        Topics mentioned across multiple feedback submissions.
+                        Click a theme to filter the list below.
+                    </p>
+                </div>
+
+            </div>
+
+            <p class="theme-empty" th:if="${#lists.isEmpty(themes)}">
+                Not enough feedback yet to spot recurring themes.
+            </p>
+
+            <ul class="theme-list" th:unless="${#lists.isEmpty(themes)}">
+
+                <li class="theme-row" th:each="theme : ${themes}">
+
+                    <button
+                            type="button"
+                            class="theme-term"
+                            th:text="${theme.term}"
+                            th:attr="data-theme-term=${theme.term}"
+                    >
+                        battery life
+                    </button>
+
+                    <span class="theme-mentions">
+                        <span th:text="${theme.mentionCount}">3</span>
+                        mentions
+                    </span>
+
+                    <span class="theme-breakdown">
+                        <span
+                                class="theme-category-chip"
+                                th:each="entry : ${theme.byCategory}"
+                                th:text="${entry.key} + ' × ' + ${entry.value}"
+                        >
+                            PRODUCT × 2
+                        </span>
+                    </span>
+
+                    <span class="theme-sentiments">
+                        <span class="theme-sentiment" th:if="${theme.bySentiment.containsKey('POSITIVE')}">
+                            <span class="theme-sentiment-dot theme-sentiment-dot--positive"></span>
+                            <span th:text="${theme.bySentiment.get('POSITIVE')}">1</span>
+                        </span>
+
+                        <span class="theme-sentiment" th:if="${theme.bySentiment.containsKey('NEUTRAL')}">
+                            <span class="theme-sentiment-dot theme-sentiment-dot--neutral"></span>
+                            <span th:text="${theme.bySentiment.get('NEUTRAL')}">1</span>
+                        </span>
+
+                        <span class="theme-sentiment" th:if="${theme.bySentiment.containsKey('NEGATIVE')}">
+                            <span class="theme-sentiment-dot theme-sentiment-dot--negative"></span>
+                            <span th:text="${theme.bySentiment.get('NEGATIVE')}">1</span>
+                        </span>
+                    </span>
+
+                </li>
+
+            </ul>
+
+        </section>
+
         <section class="admin-panel">
 
             <div class="admin-panel-header">
@@ -158,6 +234,20 @@
                             type="search"
                             placeholder="Search project, account, customer, or category..."
                     >
+
+                </div>
+
+                <div class="feedback-filter-field">
+
+                    <label for="type-filter">
+                        Submission type
+                    </label>
+
+                    <select id="type-filter">
+                        <option value="">All submissions</option>
+                        <option value="FEEDBACK">Feedback</option>
+                        <option value="COMPLAINT">Complaints</option>
+                    </select>
 
                 </div>
 
@@ -209,7 +299,8 @@
                         th:each="feedback : ${feedbackList}"
                         th:attr="
                         data-status=${feedback.status},
-                        data-category=${feedback.category}
+                        data-category=${feedback.category},
+                        data-type=${feedback.type}
                         "
                 >
 
@@ -222,6 +313,14 @@
                                     th:text="${feedback.category}"
                             >
                                 Product
+                            </span>
+
+                            <span
+                                    class="submission-type-badge"
+                                    th:classappend="${feedback.type != null and feedback.type.name() == 'COMPLAINT'} ? 'submission-type-badge--complaint'"
+                                    th:text="${feedback.type != null ? feedback.type : 'FEEDBACK'}"
+                            >
+                                FEEDBACK
                             </span>
 
                             <h3 th:text="${feedback.project}">
@@ -350,6 +449,7 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById("feedback-search");
+        const typeFilter = document.getElementById("type-filter");
         const statusFilter = document.getElementById("status-filter");
         const categoryFilter = document.getElementById("category-filter");
         const feedbackList = document.getElementById("admin-feedback-list");
@@ -387,6 +487,9 @@
             const selectedStatus =
                     statusFilter.value.toLowerCase();
 
+            const selectedType =
+                typeFilter.value.toLowerCase();
+
             const selectedCategory =
                     categoryFilter.value.toLowerCase();
 
@@ -402,6 +505,9 @@
                 const cardCategory =
                         (card.dataset.category || "").toLowerCase();
 
+                const cardType =
+                    (card.dataset.type || "").toLowerCase();
+
                 const matchesSearch =
                         !searchValue ||
                         cardText.includes(searchValue);
@@ -414,10 +520,15 @@
                         !selectedCategory ||
                         cardCategory === selectedCategory;
 
+                const matchesType =
+                    !selectedType ||
+                    cardType === selectedType;
+
                 const isVisible =
-                        matchesSearch &&
-                        matchesStatus &&
-                        matchesCategory;
+                    matchesSearch &&
+                    matchesType &&
+                    matchesStatus &&
+                    matchesCategory;
 
                 card.hidden = !isVisible;
 
@@ -430,8 +541,17 @@
         }
 
         searchInput.addEventListener("input", filterFeedback);
+        typeFilter.addEventListener("change", filterFeedback);
         statusFilter.addEventListener("change", filterFeedback);
         categoryFilter.addEventListener("change", filterFeedback);
+
+        document.querySelectorAll(".theme-term").forEach(button => {
+            button.addEventListener("click", function () {
+                searchInput.value = button.dataset.themeTerm || "";
+                filterFeedback();
+                searchInput.focus();
+            });
+        });
     });
 </script>
 

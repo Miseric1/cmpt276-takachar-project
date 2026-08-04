@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
 
     <title>Support Tickets | Takachar</title>
 
@@ -41,12 +43,17 @@
                 <span class="admin-nav-icon">▱</span>
                 Support tickets
             </a>
-            
+
+            <a class="admin-nav-link" th:href="@{/admin/customers}">
+                <span class="admin-nav-icon">●</span>
+                Customer accounts
+            </a>
+
             <a class="admin-nav-link" th:href="@{/admin/tree}">
-                <span class="admin-nav-icon">▱</span>
+                <span class="admin-nav-icon">⌘</span>
                 Diagnostic Tree
             </a>
-            
+
         </nav>
 
     </aside>
@@ -88,30 +95,84 @@
         <section class="admin-panel">
 
             <div class="admin-panel-header">
-
                 <div>
                     <h2>Ticket management</h2>
-                    <p>
-                        Track and manage customer support requests.
-                    </p>
+                    <p>Track and manage customer support requests.</p>
                 </div>
+                <span class="admin-feedback-count" id="ticket-count">&nbsp;</span>
+            </div>
+
+            <div class="ticket-filter-bar">
+
+                <div class="ticket-search-wrap">
+                    <span class="ticket-search-icon">&#9906;</span>
+                    <input type="text" id="ticket-search" class="ticket-search-input"
+                           placeholder="Search subject, reference, customer...">
+                </div>
+
+                <select id="ticket-status-filter" class="ticket-filter-select">
+                    <option value="">All statuses</option>
+                    <option value="OPEN">Open</option>
+                    <option value="IN_PROGRESS">In progress</option>
+                    <option value="WAITING_FOR_CUSTOMER">Waiting on customer</option>
+                    <option value="WAITING_FOR_LOGISTICS">Waiting on logistics</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="CLOSED">Closed</option>
+                </select>
+
+                <select id="ticket-priority-filter" class="ticket-filter-select">
+                    <option value="">All priorities</option>
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="URGENT">Urgent</option>
+                </select>
+
+                <button type="button" class="admin-secondary-button" id="ticket-refresh-btn">
+                    Refresh
+                </button>
+
+                <button type="button" class="btn btn-primary btn-inline ticket-new-button" id="ticket-new-btn">
+                    + New ticket
+                </button>
 
             </div>
 
-            <div class="admin-empty-state">
+            <div id="ticket-loading" class="faq-loading">Loading tickets…</div>
 
+            <div id="ticket-load-error" class="faq-load-error" hidden>
+                Couldn't load tickets right now. Please try refreshing.
+            </div>
+
+            <div id="ticket-empty-state" class="admin-empty-state" hidden>
                 <div class="admin-empty-icon">▱</div>
-
                 <div>
-                    <h3>Support tickets coming next iteration</h3>
-
-                    <p>
-                        This page is ready for the future ticket workflow,
-                        including status, assignment, priority, and target
-                        resolution dates.
-                    </p>
+                    <h3>No tickets match these filters</h3>
+                    <p>Try clearing the search or filters above.</p>
                 </div>
+            </div>
 
+            <div id="ticket-table-wrapper" class="admin-table-wrapper" hidden>
+                <table class="admin-feedback-table">
+                    <thead>
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Customer</th>
+                        <th>Project / dept.</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Assignee</th>
+                        <th>Target resolution</th>
+                    </tr>
+                    </thead>
+                    <tbody id="ticket-table-body"></tbody>
+                </table>
+            </div>
+
+            <div class="ticket-pagination" id="ticket-pagination" hidden>
+                <button type="button" class="admin-secondary-button" id="ticket-prev-btn">Previous</button>
+                <span id="ticket-page-label"></span>
+                <button type="button" class="admin-secondary-button" id="ticket-next-btn">Next</button>
             </div>
 
         </section>
@@ -119,6 +180,631 @@
     </main>
 
 </div>
+
+<!-- Ticket detail modal -->
+<div class="faq-modal-overlay" id="ticket-detail-overlay" hidden>
+    <div class="ticket-modal">
+
+        <div class="faq-modal-header">
+            <h3 id="ticket-detail-title">Ticket</h3>
+            <button type="button" class="faq-modal-close" id="ticket-detail-close">&times;</button>
+        </div>
+
+        <div class="ticket-modal-body" id="ticket-detail-body">
+            <!-- populated by JS -->
+        </div>
+
+    </div>
+</div>
+
+<!-- New ticket modal -->
+<div class="faq-modal-overlay" id="ticket-create-overlay" hidden>
+    <div class="faq-modal">
+
+        <div class="faq-modal-header">
+            <h3>New ticket</h3>
+            <button type="button" class="faq-modal-close" id="ticket-create-close">&times;</button>
+        </div>
+
+        <form class="faq-modal-form" id="ticket-create-form">
+
+            <div class="ticket-inline-error" id="ticket-create-error" hidden></div>
+
+            <div class="form-group">
+                <label for="tc-subject">Subject</label>
+                <input type="text" id="tc-subject" name="subject" maxlength="200" required>
+            </div>
+
+            <div class="form-group">
+                <label for="tc-description">Description</label>
+                <textarea id="tc-description" name="description" maxlength="10000" required></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="tc-project">Project</label>
+                    <input type="text" id="tc-project" name="project" maxlength="150" required>
+                </div>
+                <div class="form-group">
+                    <label for="tc-customer-email">Customer email</label>
+                    <input type="email" id="tc-customer-email" name="customerEmail">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="tc-priority">Priority (optional — auto-triaged if left blank)</label>
+                    <select id="tc-priority" name="priority">
+                        <option value="">Auto-detect</option>
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="HIGH">High</option>
+                        <option value="URGENT">Urgent</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tc-spoc-email">SPOC email</label>
+                    <input type="email" id="tc-spoc-email" name="spocEmail">
+                </div>
+            </div>
+
+            <div class="faq-modal-actions">
+                <div class="faq-modal-actions-right">
+                    <button type="button" class="btn btn-secondary btn-inline" id="ticket-create-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-inline">Create ticket</button>
+                </div>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<script th:inline="javascript">
+(function () {
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+    const STATUS_LABELS = {
+        OPEN: 'Open',
+        IN_PROGRESS: 'In progress',
+        WAITING_FOR_CUSTOMER: 'Waiting on customer',
+        WAITING_FOR_LOGISTICS: 'Waiting on logistics',
+        RESOLVED: 'Resolved',
+        CLOSED: 'Closed'
+    };
+    const EVENT_LABELS = {
+        CREATED: 'Ticket created',
+        STATUS_CHANGED: 'Status changed',
+        ASSIGNED: 'Assigned / SLA updated',
+        NOTE_ADDED: 'Note added',
+        ATTACHMENT_ADDED: 'Attachment added',
+        ATTACHMENT_REMOVED: 'Attachment removed',
+        TARGET_DATE_CHANGED: 'Target date changed'
+    };
+
+    const state = {
+        page: 0,
+        size: 20,
+        keyword: '',
+        status: '',
+        priority: '',
+        totalPages: 1,
+        activeTicketId: null,
+        searchTimer: null
+    };
+
+    const els = {
+        loading: document.getElementById('ticket-loading'),
+        loadError: document.getElementById('ticket-load-error'),
+        empty: document.getElementById('ticket-empty-state'),
+        tableWrapper: document.getElementById('ticket-table-wrapper'),
+        tableBody: document.getElementById('ticket-table-body'),
+        count: document.getElementById('ticket-count'),
+        pagination: document.getElementById('ticket-pagination'),
+        pageLabel: document.getElementById('ticket-page-label'),
+        prevBtn: document.getElementById('ticket-prev-btn'),
+        nextBtn: document.getElementById('ticket-next-btn'),
+        search: document.getElementById('ticket-search'),
+        statusFilter: document.getElementById('ticket-status-filter'),
+        priorityFilter: document.getElementById('ticket-priority-filter'),
+        refreshBtn: document.getElementById('ticket-refresh-btn'),
+        newBtn: document.getElementById('ticket-new-btn'),
+        detailOverlay: document.getElementById('ticket-detail-overlay'),
+        detailTitle: document.getElementById('ticket-detail-title'),
+        detailBody: document.getElementById('ticket-detail-body'),
+        detailClose: document.getElementById('ticket-detail-close'),
+        createOverlay: document.getElementById('ticket-create-overlay'),
+        createForm: document.getElementById('ticket-create-form'),
+        createError: document.getElementById('ticket-create-error'),
+        createClose: document.getElementById('ticket-create-close'),
+        createCancel: document.getElementById('ticket-create-cancel')
+    };
+
+    function authHeaders(extra) {
+        const headers = Object.assign({}, extra || {});
+        headers[csrfHeader] = csrfToken;
+        return headers;
+    }
+
+    function formatDate(value) {
+        if (!value) return '—';
+        const d = new Date(value);
+        if (isNaN(d.getTime())) return value;
+        return d.toLocaleString(undefined, {
+            month: 'short', day: 'numeric', year: 'numeric',
+            hour: 'numeric', minute: '2-digit'
+        });
+    }
+
+    function statusClass(status) {
+        return 'ticket-status-' + (status || '').toLowerCase();
+    }
+
+    function priorityClass(priority) {
+        return 'ticket-priority-' + (priority || '').toLowerCase();
+    }
+
+    function healthClass(health) {
+        return 'ticket-health-' + (health || 'green').toLowerCase();
+    }
+
+    function buildListUrl() {
+        const params = new URLSearchParams();
+        if (state.keyword) params.set('keyword', state.keyword);
+        if (state.status) params.set('status', state.status);
+        if (state.priority) params.set('priority', state.priority);
+        params.set('page', state.page);
+        params.set('size', state.size);
+        return '/api/tickets?' + params.toString();
+    }
+
+    function setLoading(isLoading) {
+        els.loading.hidden = !isLoading;
+        if (isLoading) {
+            els.loadError.hidden = true;
+            els.empty.hidden = true;
+            els.tableWrapper.hidden = true;
+            els.pagination.hidden = true;
+        }
+    }
+
+    async function loadTickets() {
+        setLoading(true);
+        try {
+            const res = await fetch(buildListUrl(), { headers: authHeaders() });
+            if (!res.ok) throw new Error('Request failed: ' + res.status);
+            const data = await res.json();
+            renderTickets(data);
+        } catch (err) {
+            console.error(err);
+            els.loading.hidden = true;
+            els.loadError.hidden = false;
+        }
+    }
+
+    function renderTickets(data) {
+        els.loading.hidden = true;
+
+        // Tolerate a couple of reasonable PageResponse shapes.
+        const tickets = data.content || data.items || [];
+        const totalElements = data.totalElements ?? data.total ?? tickets.length;
+        const totalPages = data.totalPages
+            ?? Math.max(1, Math.ceil(totalElements / state.size));
+        const currentPage = data.page ?? data.number ?? state.page;
+
+        state.totalPages = totalPages;
+        els.count.textContent = totalElements + (totalElements === 1 ? ' ticket' : ' tickets');
+
+        if (tickets.length === 0) {
+            els.empty.hidden = false;
+            els.tableWrapper.hidden = true;
+            els.pagination.hidden = true;
+            return;
+        }
+
+        els.empty.hidden = true;
+        els.tableWrapper.hidden = false;
+        els.tableBody.innerHTML = tickets.map(rowHtml).join('');
+
+        Array.from(els.tableBody.querySelectorAll('tr[data-ticket-id]')).forEach(row => {
+            row.addEventListener('click', () => openTicketDetail(row.dataset.ticketId));
+        });
+
+        els.pagination.hidden = totalPages <= 1;
+        els.pageLabel.textContent = 'Page ' + (currentPage + 1) + ' of ' + totalPages;
+        els.prevBtn.disabled = currentPage <= 0;
+        els.nextBtn.disabled = currentPage >= totalPages - 1;
+    }
+
+    function rowHtml(t) {
+        return `
+            <tr class="ticket-row" data-ticket-id="${t.id}">
+                <td>
+                    <span class="ticket-ref">${escapeHtml(t.referenceNumber || '')}</span>
+                    ${escapeHtml(t.subject || '')}
+                </td>
+                <td>${escapeHtml(t.customerEmail || '—')}</td>
+                <td>${escapeHtml(t.project || '—')}${t.department ? ' / ' + escapeHtml(t.department) : ''}</td>
+                <td><span class="ticket-priority-badge ${priorityClass(t.priority)}">${t.priority || '—'}</span></td>
+                <td>
+                    <span class="ticket-status-cell">
+                        <span class="ticket-health-dot ${healthClass(t.health)}"></span>
+                        <span class="ticket-status-badge ${statusClass(t.status)}">${STATUS_LABELS[t.status] || t.status}</span>
+                    </span>
+                </td>
+                <td>${escapeHtml(t.assigneeEmail || 'Unassigned')}</td>
+                <td>${formatDate(t.targetResolutionAt)}</td>
+            </tr>
+        `;
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ----- Detail modal -----
+
+    async function openTicketDetail(id) {
+        state.activeTicketId = id;
+        els.detailOverlay.hidden = false;
+        els.detailTitle.textContent = 'Loading…';
+        els.detailBody.innerHTML = '<div class="faq-loading">Loading ticket…</div>';
+        await refreshTicketDetail(id);
+    }
+
+    async function refreshTicketDetail(id) {
+        try {
+            const res = await fetch(`/api/tickets/${id}`, { headers: authHeaders() });
+            if (!res.ok) throw new Error('Request failed: ' + res.status);
+            const ticket = await res.json();
+            renderTicketDetail(ticket);
+        } catch (err) {
+            console.error(err);
+            els.detailBody.innerHTML = '<div class="faq-load-error">Couldn\'t load this ticket.</div>';
+        }
+    }
+
+    function renderTicketDetail(t) {
+        els.detailTitle.textContent = `${t.referenceNumber || ''} — ${t.subject || ''}`;
+
+        const timelineHtml = (t.timeline || [])
+            .slice()
+            .reverse()
+            .map(ev => `
+                <div class="ticket-timeline-item">
+                    <span class="ticket-timeline-dot"></span>
+                    <div class="ticket-timeline-body">
+                        <div class="ticket-timeline-label">${EVENT_LABELS[ev.type] || ev.type}</div>
+                        <div class="ticket-timeline-meta">${escapeHtml(ev.actorEmail || '')} · ${formatDate(ev.createdAt)}</div>
+                        ${ev.message ? `<div class="ticket-timeline-message">${escapeHtml(ev.message)}</div>` : ''}
+                    </div>
+                </div>
+            `).join('') || '<p class="admin-empty-message">No activity yet.</p>';
+
+        const attachmentsHtml = (t.attachments || []).map(a => `
+            <div class="ticket-attachment-item" data-attachment-id="${a.id}">
+                <div>
+                    <a href="${a.downloadUrl}" target="_blank" rel="noopener">${escapeHtml(a.filename)}</a>
+                    <span class="ticket-attachment-size">${formatBytes(a.sizeBytes)}</span>
+                </div>
+                <button type="button" class="ticket-attachment-delete" data-delete-attachment="${a.id}">Remove</button>
+            </div>
+        `).join('') || '<p class="admin-empty-message">No attachments.</p>';
+
+        els.detailBody.innerHTML = `
+            <div class="ticket-inline-error" id="ticket-action-error" hidden></div>
+
+            <div class="ticket-modal-grid">
+
+                <div>
+                    <div class="ticket-modal-section">
+                        <h4>Description</h4>
+                        <p class="ticket-detail-desc">${escapeHtml(t.description || '')}</p>
+                    </div>
+
+                    <div class="ticket-modal-section">
+                        <h4>Update status</h4>
+                        <div class="form-group">
+                            <select id="td-status">
+                                ${Object.keys(STATUS_LABELS).map(s =>
+                                    `<option value="${s}" ${s === t.status ? 'selected' : ''}>${STATUS_LABELS[s]}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="td-status-note" placeholder="Optional note about this change" maxlength="1000"></textarea>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-inline" id="td-status-submit">Update status</button>
+                    </div>
+
+                    <div class="ticket-modal-section">
+                        <h4>Assignment &amp; SLA</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Department</label>
+                                <input type="text" id="td-department" value="${escapeHtml(t.department || '')}">
+                            </div>
+                            <div class="form-group">
+                                <label>Priority</label>
+                                <select id="td-priority">
+                                    ${['LOW','MEDIUM','HIGH','URGENT'].map(p =>
+                                        `<option value="${p}" ${p === t.priority ? 'selected' : ''}>${p}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Assignee email</label>
+                                <input type="email" id="td-assignee" value="${escapeHtml(t.assigneeEmail || '')}">
+                            </div>
+                            <div class="form-group">
+                                <label>SPOC email</label>
+                                <input type="email" id="td-spoc" value="${escapeHtml(t.spocEmail || '')}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Target resolution</label>
+                            <input type="datetime-local" id="td-target-date"
+                                   value="${toDatetimeLocal(t.targetResolutionAt)}">
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-inline" id="td-assignment-submit">Save assignment</button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="ticket-modal-section">
+                        <h4>Details</h4>
+                        <div class="ticket-meta-row"><span>Customer</span><span>${escapeHtml(t.customerEmail || '—')}</span></div>
+                        <div class="ticket-meta-row"><span>Project</span><span>${escapeHtml(t.project || '—')}</span></div>
+                        <div class="ticket-meta-row"><span>Created</span><span>${formatDate(t.createdAt)}</span></div>
+                        <div class="ticket-meta-row"><span>First response</span><span>${formatDate(t.firstRespondedAt)}</span></div>
+                        <div class="ticket-meta-row"><span>Resolved</span><span>${formatDate(t.resolvedAt)}</span></div>
+                        ${t.suggestedArticle ? `<div class="ticket-meta-row"><span>Suggested article</span><span>${escapeHtml(t.suggestedArticle.title || '')}</span></div>` : ''}
+                    </div>
+
+                    <div class="ticket-modal-section">
+                        <h4>Attachments</h4>
+                        <div class="ticket-attachment-list">${attachmentsHtml}</div>
+                        <input type="file" id="td-attachment-input" style="margin-top:10px;">
+                    </div>
+
+                    <div class="ticket-modal-section">
+                        <h4>Timeline</h4>
+                        <div class="ticket-timeline">${timelineHtml}</div>
+                        <form class="ticket-note-form" id="td-note-form">
+                            <textarea id="td-note-message" placeholder="Add a note…" maxlength="1000" required></textarea>
+                            <button type="submit" class="btn btn-primary btn-inline">Post</button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        `;
+
+        wireDetailActions(t.id);
+    }
+
+    function toDatetimeLocal(value) {
+        if (!value) return '';
+        // value arrives as an ISO-ish LocalDateTime string; trim to minutes.
+        return value.length >= 16 ? value.substring(0, 16) : value;
+    }
+
+    function formatBytes(bytes) {
+        if (bytes == null) return '';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function showActionError(message) {
+        const el = document.getElementById('ticket-action-error');
+        if (!el) return;
+        el.textContent = message;
+        el.hidden = false;
+    }
+
+    function wireDetailActions(ticketId) {
+        document.getElementById('td-status-submit').addEventListener('click', async () => {
+            const status = document.getElementById('td-status').value;
+            const note = document.getElementById('td-status-note').value;
+            try {
+                const res = await fetch(`/api/tickets/${ticketId}/status`, {
+                    method: 'PATCH',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ status, note: note || null })
+                });
+                if (!res.ok) throw new Error(await res.text());
+                await refreshTicketDetail(ticketId);
+                await loadTickets();
+            } catch (err) {
+                showActionError('Could not update status. That transition may not be allowed from the current state.');
+            }
+        });
+
+        document.getElementById('td-assignment-submit').addEventListener('click', async () => {
+            const department = document.getElementById('td-department').value;
+            const assigneeEmail = document.getElementById('td-assignee').value;
+            const spocEmail = document.getElementById('td-spoc').value;
+            const priority = document.getElementById('td-priority').value;
+            const targetResolutionAt = document.getElementById('td-target-date').value;
+            try {
+                const res = await fetch(`/api/tickets/${ticketId}/assignment`, {
+                    method: 'PATCH',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({
+                        department: department || null,
+                        assigneeEmail: assigneeEmail || null,
+                        spocEmail: spocEmail || null,
+                        priority: priority || null,
+                        targetResolutionAt: targetResolutionAt || null
+                    })
+                });
+                if (!res.ok) throw new Error(await res.text());
+                await refreshTicketDetail(ticketId);
+                await loadTickets();
+            } catch (err) {
+                showActionError('Could not save the assignment. Please check the fields and try again.');
+            }
+        });
+
+        document.getElementById('td-note-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = document.getElementById('td-note-message').value.trim();
+            if (!message) return;
+            try {
+                const res = await fetch(`/api/tickets/${ticketId}/timeline`, {
+                    method: 'POST',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ message })
+                });
+                if (!res.ok) throw new Error(await res.text());
+                await refreshTicketDetail(ticketId);
+            } catch (err) {
+                showActionError('Could not post that note.');
+            }
+        });
+
+        const attachmentInput = document.getElementById('td-attachment-input');
+        attachmentInput.addEventListener('change', async () => {
+            const file = attachmentInput.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const res = await fetch(`/api/tickets/${ticketId}/attachments`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: formData
+                });
+                if (!res.ok) throw new Error(await res.text());
+                await refreshTicketDetail(ticketId);
+            } catch (err) {
+                showActionError('Could not upload that file.');
+            }
+        });
+
+        Array.from(document.querySelectorAll('[data-delete-attachment]')).forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const attachmentId = btn.dataset.deleteAttachment;
+                if (!confirm('Remove this attachment?')) return;
+                try {
+                    const res = await fetch(`/api/tickets/${ticketId}/attachments/${attachmentId}`, {
+                        method: 'DELETE',
+                        headers: authHeaders()
+                    });
+                    if (!res.ok) throw new Error(await res.text());
+                    await refreshTicketDetail(ticketId);
+                } catch (err) {
+                    showActionError('Could not remove that attachment.');
+                }
+            });
+        });
+    }
+
+    function closeDetailModal() {
+        els.detailOverlay.hidden = true;
+        state.activeTicketId = null;
+    }
+
+    // ----- Create ticket modal -----
+
+    function openCreateModal() {
+        els.createForm.reset();
+        els.createError.hidden = true;
+        els.createOverlay.hidden = false;
+    }
+
+    function closeCreateModal() {
+        els.createOverlay.hidden = true;
+    }
+
+    els.createForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        els.createError.hidden = true;
+
+        const body = {
+            subject: document.getElementById('tc-subject').value,
+            description: document.getElementById('tc-description').value,
+            project: document.getElementById('tc-project').value,
+            customerEmail: document.getElementById('tc-customer-email').value || null,
+            priority: document.getElementById('tc-priority').value || null,
+            spocEmail: document.getElementById('tc-spoc-email').value || null
+        };
+
+        try {
+            const res = await fetch('/api/tickets', {
+                method: 'POST',
+                headers: authHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error(await res.text());
+            closeCreateModal();
+            state.page = 0;
+            await loadTickets();
+        } catch (err) {
+            els.createError.textContent = 'Could not create the ticket. Check the required fields and try again.';
+            els.createError.hidden = false;
+        }
+    });
+
+    // ----- Wiring -----
+
+    els.refreshBtn.addEventListener('click', loadTickets);
+    els.newBtn.addEventListener('click', openCreateModal);
+    els.createClose.addEventListener('click', closeCreateModal);
+    els.createCancel.addEventListener('click', closeCreateModal);
+    els.detailClose.addEventListener('click', closeDetailModal);
+
+    els.detailOverlay.addEventListener('click', (e) => {
+        if (e.target === els.detailOverlay) closeDetailModal();
+    });
+    els.createOverlay.addEventListener('click', (e) => {
+        if (e.target === els.createOverlay) closeCreateModal();
+    });
+
+    els.search.addEventListener('input', () => {
+        clearTimeout(state.searchTimer);
+        state.searchTimer = setTimeout(() => {
+            state.keyword = els.search.value.trim();
+            state.page = 0;
+            loadTickets();
+        }, 300);
+    });
+
+    els.statusFilter.addEventListener('change', () => {
+        state.status = els.statusFilter.value;
+        state.page = 0;
+        loadTickets();
+    });
+
+    els.priorityFilter.addEventListener('change', () => {
+        state.priority = els.priorityFilter.value;
+        state.page = 0;
+        loadTickets();
+    });
+
+    els.prevBtn.addEventListener('click', () => {
+        if (state.page > 0) {
+            state.page -= 1;
+            loadTickets();
+        }
+    });
+
+    els.nextBtn.addEventListener('click', () => {
+        if (state.page < state.totalPages - 1) {
+            state.page += 1;
+            loadTickets();
+        }
+    });
+
+    loadTickets();
+})();
+</script>
 
 </body>
 </html>

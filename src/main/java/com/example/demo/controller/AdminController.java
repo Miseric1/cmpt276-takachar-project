@@ -1,8 +1,16 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.PageResponse;
+import com.example.demo.dto.dashboard.TicketStatisticsDto;
+import com.example.demo.dto.ticket.TicketSummary;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.model.Feedback;
+import com.example.demo.service.DashboardService;
 import com.example.demo.service.FeedbackService;
+import com.example.demo.service.TicketService;
+import com.example.demo.service.analytics.FeedbackThemeService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -16,10 +24,23 @@ import java.util.List;
 @Controller
 public class AdminController {
 
-    private final FeedbackService feedbackService;
+    private static final int TICKET_PREVIEW_LIMIT = 5;
+    private static final int DASHBOARD_THEME_LIMIT = 5;
+    private static final int TRACKER_THEME_LIMIT = 10;
 
-    public AdminController(FeedbackService feedbackService) {
+    private final FeedbackService feedbackService;
+    private final TicketService ticketService;
+    private final DashboardService dashboardService;
+    private final FeedbackThemeService feedbackThemeService;
+
+    public AdminController(FeedbackService feedbackService,
+                            TicketService ticketService,
+                            DashboardService dashboardService,
+                            FeedbackThemeService feedbackThemeService) {
         this.feedbackService = feedbackService;
+        this.ticketService = ticketService;
+        this.dashboardService = dashboardService;
+        this.feedbackThemeService = feedbackThemeService;
     }
 
     @GetMapping("/admin/home")
@@ -38,9 +59,39 @@ public class AdminController {
         model.addAttribute("email", userDetails.getUsername());
         model.addAttribute("feedbackList", openFeedbackList);
         model.addAttribute("totalFeedback", feedbackList.size());
-        model.addAttribute("openFeedback", openFeedbackList.size());
+        model.addAttribute("openFeedback", openFeedback);
+        model.addAttribute("themes",
+                feedbackThemeService.extractThemes(feedbackList, DASHBOARD_THEME_LIMIT));
+
+        addTicketOverviewAttributes(userDetails, model);
 
         return "admin";
+    }
+
+    /**
+     * Populates the two ticket stat cards and the "Support tickets" preview
+     * panel on the dashboard. Uses the same TicketStatisticsDto the
+     * /api/dashboard/tickets endpoint returns, and a small unfiltered page of
+     * tickets (sorted soonest-due-first, then narrowed to open ones) for the
+     * preview list — so both stay in sync with the real ticket data without
+     * duplicating the aggregation logic.
+     */
+    private void addTicketOverviewAttributes(UserDetails userDetails, Model model) {
+        TicketStatisticsDto ticketStats = dashboardService.getTicketStatistics();
+        model.addAttribute("overdueTickets", ticketStats.overdue());
+        model.addAttribute("resolvedTickets", ticketStats.resolved());
+
+        PageResponse<TicketSummary> page = ticketService.search(
+                null, null, null, null, null, null, null, null,
+                PageRequest.of(0, 50, Sort.by("targetResolutionAt").ascending()),
+                userDetails.getUsername(), true);
+
+        List<TicketSummary> activeTickets = page.getContent().stream()
+                .filter(ticket -> ticket.status().isOpen())
+                .limit(TICKET_PREVIEW_LIMIT)
+                .toList();
+
+        model.addAttribute("activeTickets", activeTickets);
     }
 
     @GetMapping("/admin/feedback")
@@ -60,6 +111,8 @@ public class AdminController {
         model.addAttribute("feedbackList", feedbackList);
         model.addAttribute("totalFeedback", feedbackList.size());
         model.addAttribute("openFeedback", openFeedback);
+        model.addAttribute("themes",
+                feedbackThemeService.extractThemes(feedbackList, TRACKER_THEME_LIMIT));
 
         return "admin-feedback";
     }
@@ -106,6 +159,16 @@ public class AdminController {
         model.addAttribute("email", userDetails.getUsername());
 
         return "admin-tickets";
+    }
+
+    @GetMapping("/admin/customers")
+    public String customerAccounts(
+            @AuthenticationPrincipal UserDetails userDetails,
+            Model model
+    ) {
+        model.addAttribute("email", userDetails.getUsername());
+
+        return "admin-customers";
     }
 
     @GetMapping("/admin/tree")
