@@ -468,7 +468,7 @@
         const relatedFaqHtml = !editMode && relatedFaq ? `
             <div class="dt-faq-section">
                 <strong>Related FAQ:</strong>
-                <a href="/customer/faq">${esc(relatedFaq.title)}</a>
+                <a href="${IS_CUSTOMER ? '/customer/faq' : '/admin/faq'}?article=${relatedFaq.id}">${esc(relatedFaq.title)}</a>
             </div>` : '';
 
         const ticketBtn = IS_CUSTOMER ? (createdTicket ? `

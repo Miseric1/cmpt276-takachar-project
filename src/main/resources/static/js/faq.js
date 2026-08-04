@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 showLoadError(false);
                 renderCategoryChips();
                 renderArticles();
+                openDeepLinkedArticle();
             })
             .catch(function () {
                 setLoading(false);
@@ -439,6 +440,30 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
         return parts.length ? parts.join(' — ') : 'Something went wrong. Please try again.';
+    }
+
+    // --- Deep link: /customer/faq?article={id} expands and scrolls to
+    // the matching FAQ item (used by the "Related FAQ" link on the
+    // diagnostic tree's resolution nodes). -----------------------------
+    function openDeepLinkedArticle() {
+        if (!accordion) return;
+
+        const params = new URLSearchParams(window.location.search);
+        const articleId = params.get('article');
+        if (!articleId) return;
+
+        const item = accordion.querySelector('.faq-item[data-id="' + articleId + '"]');
+        if (!item) return;
+
+        // Make sure it's visible regardless of the current category filter,
+        // then expand it and load its answer body like a normal click would.
+        item.hidden = false;
+        item.classList.add('is-open');
+        const questionBtn = item.querySelector('.faq-question');
+        if (questionBtn) questionBtn.setAttribute('aria-expanded', 'true');
+        loadAnswerBody(item);
+
+        item.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // --- Small helpers -----------------------------------------------
