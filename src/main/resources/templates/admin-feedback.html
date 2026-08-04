@@ -135,6 +135,77 @@
 
         </section>
 
+        <!-- Recurring feedback themes -->
+        <section class="admin-panel">
+
+            <div class="admin-panel-header">
+
+                <div>
+                    <h2>Recurring themes</h2>
+
+                    <p>
+                        Topics mentioned across multiple feedback submissions.
+                        Click a theme to filter the list below.
+                    </p>
+                </div>
+
+            </div>
+
+            <p class="theme-empty" th:if="${#lists.isEmpty(themes)}">
+                Not enough feedback yet to spot recurring themes.
+            </p>
+
+            <ul class="theme-list" th:unless="${#lists.isEmpty(themes)}">
+
+                <li class="theme-row" th:each="theme : ${themes}">
+
+                    <button
+                            type="button"
+                            class="theme-term"
+                            th:text="${theme.term}"
+                            th:attr="data-theme-term=${theme.term}"
+                    >
+                        battery life
+                    </button>
+
+                    <span class="theme-mentions">
+                        <span th:text="${theme.mentionCount}">3</span>
+                        mentions
+                    </span>
+
+                    <span class="theme-breakdown">
+                        <span
+                                class="theme-category-chip"
+                                th:each="entry : ${theme.byCategory}"
+                                th:text="${entry.key} + ' × ' + ${entry.value}"
+                        >
+                            PRODUCT × 2
+                        </span>
+                    </span>
+
+                    <span class="theme-sentiments">
+                        <span class="theme-sentiment" th:if="${theme.bySentiment.containsKey('POSITIVE')}">
+                            <span class="theme-sentiment-dot theme-sentiment-dot--positive"></span>
+                            <span th:text="${theme.bySentiment.get('POSITIVE')}">1</span>
+                        </span>
+
+                        <span class="theme-sentiment" th:if="${theme.bySentiment.containsKey('NEUTRAL')}">
+                            <span class="theme-sentiment-dot theme-sentiment-dot--neutral"></span>
+                            <span th:text="${theme.bySentiment.get('NEUTRAL')}">1</span>
+                        </span>
+
+                        <span class="theme-sentiment" th:if="${theme.bySentiment.containsKey('NEGATIVE')}">
+                            <span class="theme-sentiment-dot theme-sentiment-dot--negative"></span>
+                            <span th:text="${theme.bySentiment.get('NEGATIVE')}">1</span>
+                        </span>
+                    </span>
+
+                </li>
+
+            </ul>
+
+        </section>
+
         <section class="admin-panel">
 
             <div class="admin-panel-header">
@@ -444,6 +515,14 @@
         searchInput.addEventListener("input", filterFeedback);
         statusFilter.addEventListener("change", filterFeedback);
         categoryFilter.addEventListener("change", filterFeedback);
+
+        document.querySelectorAll(".theme-term").forEach(button => {
+            button.addEventListener("click", function () {
+                searchInput.value = button.dataset.themeTerm || "";
+                filterFeedback();
+                searchInput.focus();
+            });
+        });
     });
 </script>
 

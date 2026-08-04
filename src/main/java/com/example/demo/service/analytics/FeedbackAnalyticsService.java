@@ -2,6 +2,7 @@ package com.example.demo.service.analytics;
 
 import com.example.demo.dto.dashboard.ChartSeries;
 import com.example.demo.dto.dashboard.FeedbackStatisticsDto;
+import com.example.demo.dto.dashboard.ThemeSummary;
 import com.example.demo.repository.FeedbackRepository;
 import com.example.demo.util.TrendUtils;
 
@@ -22,11 +23,15 @@ import java.util.Map;
 public class FeedbackAnalyticsService {
 
     private static final int TREND_DAYS = 14;
+    private static final int THEME_LIMIT = 10;
 
     private final FeedbackRepository feedbackRepository;
+    private final FeedbackThemeService feedbackThemeService;
 
-    public FeedbackAnalyticsService(FeedbackRepository feedbackRepository) {
+    public FeedbackAnalyticsService(FeedbackRepository feedbackRepository,
+                                    FeedbackThemeService feedbackThemeService) {
         this.feedbackRepository = feedbackRepository;
+        this.feedbackThemeService = feedbackThemeService;
     }
 
     @Transactional(readOnly = true)
@@ -57,8 +62,11 @@ public class FeedbackAnalyticsService {
         long open = byStatus.getOrDefault("OPEN", 0L);
         long resolved = byStatus.getOrDefault("RESOLVED", 0L);
 
+        List<ThemeSummary> topThemes = feedbackThemeService
+                .extractThemes(feedbackRepository.findAll(), THEME_LIMIT);
+
         return new FeedbackStatisticsDto(total, open, resolved, byStatus, byCategory,
-                last7, last30, List.of(submissions));
+                last7, last30, List.of(submissions), topThemes);
     }
 
     /** Convert a {status/category, count} projection into an ordered map. */

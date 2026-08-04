@@ -6,6 +6,7 @@ import com.example.demo.dto.dashboard.DashboardOverviewDto;
 import com.example.demo.dto.dashboard.DashboardSummaryDto;
 import com.example.demo.dto.dashboard.FeedbackStatisticsDto;
 import com.example.demo.dto.dashboard.KnowledgeStatisticsDto;
+import com.example.demo.dto.dashboard.ThemeSummary;
 import com.example.demo.dto.dashboard.TicketStatisticsDto;
 import com.example.demo.service.DashboardService;
 import com.example.demo.service.analytics.ActivityService;
@@ -47,7 +48,7 @@ class DashboardControllerTest {
     void getDashboardReturnsFullSummary() throws Exception {
         DashboardSummaryDto summary = new DashboardSummaryDto(
                 overview(), TicketStatisticsDto.empty(),
-                new FeedbackStatisticsDto(5, 2, 3, Map.of(), Map.of(), 1, 2, List.of()),
+                new FeedbackStatisticsDto(5, 2, 3, Map.of(), Map.of(), 1, 2, List.of(), List.of()),
                 new KnowledgeStatisticsDto(10, 8, 1, 1, Map.of(), 100, List.of(), List.of()),
                 List.of());
         when(dashboardService.getSummary()).thenReturn(summary);
@@ -80,11 +81,15 @@ class DashboardControllerTest {
     @Test
     void getFeedbackStatisticsReturnsData() throws Exception {
         when(dashboardService.getFeedbackStatistics())
-                .thenReturn(new FeedbackStatisticsDto(5, 2, 3, Map.of("OPEN", 2L), Map.of(), 1, 2, List.of()));
+                .thenReturn(new FeedbackStatisticsDto(5, 2, 3, Map.of("OPEN", 2L), Map.of(), 1, 2, List.of(),
+                        List.of(new ThemeSummary("battery", 3,
+                                Map.of("PRODUCT", 3L), Map.of("NEGATIVE", 2L, "NEUTRAL", 1L)))));
 
         mockMvc.perform(get("/api/dashboard/feedback"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.open").value(2));
+                .andExpect(jsonPath("$.open").value(2))
+                .andExpect(jsonPath("$.topThemes[0].term").value("battery"))
+                .andExpect(jsonPath("$.topThemes[0].mentionCount").value(3));
     }
 
     @Test
