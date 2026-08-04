@@ -61,6 +61,19 @@ class CustomerAccountApiIntegrationTest {
     }
 
     @Test
+    void omittedRoleRemainsBackwardCompatibleAndCreatesCustomer() throws Exception {
+        mockMvc.perform(post("/api/admin/customers")
+                        .with(user("spoc@takachar.com").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"legacy-customer@example.com\",\"password\":\"temporary123\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.role").value("CUSTOMER"));
+
+        assertThat(userRepository.findByEmail("legacy-customer@example.com").orElseThrow().getRole())
+                .isEqualTo("CUSTOMER");
+    }
+
+    @Test
     void adminCanCreateAnotherAdministratorAccount() throws Exception {
         mockMvc.perform(post("/api/admin/customers")
                         .with(user("spoc@takachar.com").roles("ADMIN"))
