@@ -33,7 +33,9 @@ public class CustomerAccountService {
             throw new DuplicateResourceException("An account already exists for " + email + ".");
         }
 
-        String role = request.role().trim().toUpperCase(Locale.ROOT);
+        String role = request.role() == null
+                ? "CUSTOMER"
+                : request.role().trim().toUpperCase(Locale.ROOT);
         if (!MANAGED_ROLES.contains(role)) {
             throw new IllegalArgumentException("Role must be CUSTOMER or ADMIN.");
         }
