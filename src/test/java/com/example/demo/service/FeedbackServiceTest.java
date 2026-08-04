@@ -62,6 +62,32 @@ class FeedbackServiceTest {
     }
 
     @Test
+    void shouldAttributeLoggedFeedbackToCustomerAndRecordAdmin() {
+        Feedback input = new Feedback("Cat1", "Proj1", "Acc1", "Desc1", null);
+        when(feedbackRepository.save(any(Feedback.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Feedback result = feedbackService.logFeedbackOnBehalf(
+                input, "customer@test.com", "admin@test.com");
+
+        assertThat(result.getCreatedBy()).isEqualTo("customer@test.com");
+        assertThat(result.getLoggedBy()).isEqualTo("admin@test.com");
+        assertThat(result.getStatus()).isEqualTo("OPEN");
+        assertThat(result.getType()).isEqualTo(SubmissionType.FEEDBACK);
+    }
+
+    @Test
+    void shouldLeaveLoggedByNullForCustomerSubmittedFeedback() {
+        Feedback input = new Feedback("Cat1", "Proj1", "Acc1", "Desc1", "customer@test.com");
+        when(feedbackRepository.save(any(Feedback.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Feedback result = feedbackService.createFeedback(input);
+
+        assertThat(result.getLoggedBy()).isNull();
+    }
+
+    @Test
     void shouldFilterComplaintsWithRequestedSort() {
         Feedback complaint = new Feedback("Service", "P1", "A1", "Missed pickup", "U1",
                 SubmissionType.COMPLAINT);

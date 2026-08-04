@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -112,5 +113,25 @@ class ApiSecurityTest {
     @WithMockUser(roles = "CUSTOMER")
     void customerCannotListEveryFeedbackSubmission() throws Exception {
         mockMvc.perform(get("/api/feedback")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "CUSTOMER")
+    void customerCannotOpenTheAdminLogFeedbackForm() throws Exception {
+        mockMvc.perform(get("/admin/feedback/new"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "CUSTOMER")
+    void customerCannotLogFeedbackOnBehalfOfSomeoneElse() throws Exception {
+        mockMvc.perform(post("/admin/feedback")
+                        .with(csrf())
+                        .param("customerEmail", "victim@example.com")
+                        .param("category", "PRODUCT")
+                        .param("project", "Proj")
+                        .param("account", "Acct")
+                        .param("description", "Impersonation attempt"))
+                .andExpect(status().isForbidden());
     }
 }

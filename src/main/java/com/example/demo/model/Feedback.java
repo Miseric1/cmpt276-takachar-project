@@ -34,7 +34,13 @@ public class Feedback {
     private String status;
     
     private String createdBy;
-    
+
+    /**
+     * Email of the admin who logged this entry on a customer's behalf.
+     * Null for submissions the customer made themselves.
+     */
+    private String loggedBy;
+
     private LocalDateTime createdAt;
     
     private LocalDateTime updatedAt;
@@ -144,6 +150,14 @@ public class Feedback {
 
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public String getLoggedBy() {
+        return loggedBy;
+    }
+
+    public void setLoggedBy(String loggedBy) {
+        this.loggedBy = loggedBy;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -2107,6 +2107,8 @@ body.admin-dashboard-body {
     .spoc-summary-grid {
         grid-template-columns: 1fr;
     }
+}
+
 /* Recurring feedback themes */
 
 .theme-empty {
@@ -2235,4 +2237,32 @@ body.admin-dashboard-body {
 
 .theme-sentiment-dot--negative {
     background: #dc5b5b;
+}
+
+/* Admin-logged feedback */
+
+.feedback-loggedby-badge {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 3px 9px;
+    border: 1px solid #e0d6c2;
+    border-radius: 12px;
+    background: #fdf6e6;
+    color: #8a6d3b;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.admin-panel-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-field-help {
+    margin: 7px 0 0;
+    color: #7c858e;
+    font-size: 12px;
+    line-height: 1.45;
 }

@@ -5,6 +5,7 @@ import com.example.demo.dto.dashboard.TicketStatisticsDto;
 import com.example.demo.dto.ticket.TicketSummary;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.model.Feedback;
+import com.example.demo.service.CustomerAccountService;
 import com.example.demo.service.DashboardService;
 import com.example.demo.service.FeedbackService;
 import com.example.demo.service.TicketService;
@@ -18,6 +19,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -32,15 +34,18 @@ public class AdminController {
     private final TicketService ticketService;
     private final DashboardService dashboardService;
     private final FeedbackThemeService feedbackThemeService;
+    private final CustomerAccountService customerAccountService;
 
     public AdminController(FeedbackService feedbackService,
                             TicketService ticketService,
                             DashboardService dashboardService,
-                            FeedbackThemeService feedbackThemeService) {
+                            FeedbackThemeService feedbackThemeService,
+                            CustomerAccountService customerAccountService) {
         this.feedbackService = feedbackService;
         this.ticketService = ticketService;
         this.dashboardService = dashboardService;
         this.feedbackThemeService = feedbackThemeService;
+        this.customerAccountService = customerAccountService;
     }
 
     @GetMapping("/admin/home")
@@ -115,6 +120,51 @@ public class AdminController {
                 feedbackThemeService.extractThemes(feedbackList, TRACKER_THEME_LIMIT));
 
         return "admin-feedback";
+    }
+
+    @GetMapping("/admin/feedback/new")
+    public String logFeedbackForm(
+            @AuthenticationPrincipal UserDetails userDetails,
+            Model model
+    ) {
+        model.addAttribute("email", userDetails.getUsername());
+        model.addAttribute("customers", customerAccountService.list());
+
+        return "admin-feedback-new";
+    }
+
+    /**
+     * Records feedback an admin gathered from a customer offline. The customer
+     * is chosen from the registered account list rather than typed, so the entry
+     * always resolves to a real account and shows up in that customer's own view.
+     */
+    @PostMapping("/admin/feedback")
+    public String logFeedback(
+            @RequestParam String customerEmail,
+            @RequestParam String category,
+            @RequestParam(required = false) String project,
+            @RequestParam(required = false) String account,
+            @RequestParam String description,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        boolean registeredCustomer = customerAccountService.list().stream()
+                .anyMatch(customer ->
+                        customer.email().equalsIgnoreCase(customerEmail)
+                );
+
+        if (!registeredCustomer) {
+            return "redirect:/admin/feedback/new?invalidCustomer";
+        }
+
+        Feedback feedback = new Feedback(
+                category, project, account, description, null
+        );
+
+        feedbackService.logFeedbackOnBehalf(
+                feedback, customerEmail, userDetails.getUsername()
+        );
+
+        return "redirect:/admin/feedback?logged";
     }
 
     @PostMapping("/admin/feedback/{id}/review")

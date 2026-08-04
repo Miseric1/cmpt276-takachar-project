@@ -91,6 +91,22 @@ public class FeedbackService {
         return feedbackRepository.save(feedback);
     }
 
+    /**
+     * Records feedback an admin collected from a customer offline (phone, email,
+     * site visit). The entry is attributed to the customer so it appears in their
+     * own submission list, while {@code loggedBy} preserves who actually entered it.
+     */
+    public Feedback logFeedbackOnBehalf(
+            Feedback feedback,
+            String customerEmail,
+            String adminEmail
+    ) {
+        feedback.setCreatedBy(customerEmail);
+        feedback.setLoggedBy(adminEmail);
+
+        return createFeedback(feedback);
+    }
+
     public Feedback updateFeedback(Long id, Feedback updatedFeedback) {
         return feedbackRepository.findById(id)
                 .map(feedback -> {
