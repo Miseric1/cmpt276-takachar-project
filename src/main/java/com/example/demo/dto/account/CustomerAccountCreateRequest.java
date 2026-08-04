@@ -8,7 +8,6 @@ import jakarta.validation.constraints.Size;
 public record CustomerAccountCreateRequest(
         @NotBlank @Email String email,
         @NotBlank @Size(min = 8, max = 72) String password,
-        @NotBlank
         @Pattern(regexp = "(?i)CUSTOMER|ADMIN",
                 message = "Role must be CUSTOMER or ADMIN")
         String role) {
