@@ -4,6 +4,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import java.time.LocalDateTime;
@@ -16,11 +18,17 @@ public class Feedback {
     private Long id;
 
     private String category;
+
+    @Enumerated(EnumType.STRING)
+    @jakarta.persistence.Column(nullable = false, length = 20,
+            columnDefinition = "varchar(20) default 'FEEDBACK'")
+    private SubmissionType type;
     
     private String project;
     
     private String account;
     
+    @jakarta.persistence.Column(columnDefinition = "TEXT")
     private String description;
     
     private String status;
@@ -31,21 +39,38 @@ public class Feedback {
     
     private LocalDateTime updatedAt;
 
+    @Enumerated(EnumType.STRING)
+    private SentimentLabel sentiment;
+
+    private Double sentimentConfidence;
+
+    private String sentimentModel;
+
+    private LocalDateTime sentimentAnalyzedAt;
+
     public Feedback() {
         this.status = "OPEN"; // Default status
+        this.type = SubmissionType.FEEDBACK;
     }
 
     public Feedback(String category, String project, String account, String description, String createdBy) {
+        this(category, project, account, description, createdBy, SubmissionType.FEEDBACK);
+    }
+
+    public Feedback(String category, String project, String account, String description,
+                    String createdBy, SubmissionType type) {
         this.category = category;
         this.project = project;
         this.account = account;
         this.description = description;
         this.createdBy = createdBy;
         this.status = "OPEN";
+        this.type = type == null ? SubmissionType.FEEDBACK : type;
     }
 
     @PrePersist
     protected void onCreate() {
+        if (this.type == null) this.type = SubmissionType.FEEDBACK;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
     }
@@ -71,6 +96,14 @@ public class Feedback {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public SubmissionType getType() {
+        return type;
+    }
+
+    public void setType(SubmissionType type) {
+        this.type = type;
     }
 
     public String getProject() {
@@ -127,5 +160,37 @@ public class Feedback {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public SentimentLabel getSentiment() {
+        return sentiment;
+    }
+
+    public void setSentiment(SentimentLabel sentiment) {
+        this.sentiment = sentiment;
+    }
+
+    public Double getSentimentConfidence() {
+        return sentimentConfidence;
+    }
+
+    public void setSentimentConfidence(Double sentimentConfidence) {
+        this.sentimentConfidence = sentimentConfidence;
+    }
+
+    public String getSentimentModel() {
+        return sentimentModel;
+    }
+
+    public void setSentimentModel(String sentimentModel) {
+        this.sentimentModel = sentimentModel;
+    }
+
+    public LocalDateTime getSentimentAnalyzedAt() {
+        return sentimentAnalyzedAt;
+    }
+
+    public void setSentimentAnalyzedAt(LocalDateTime sentimentAnalyzedAt) {
+        this.sentimentAnalyzedAt = sentimentAnalyzedAt;
     }
 }

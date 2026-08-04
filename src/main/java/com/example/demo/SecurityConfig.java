@@ -34,7 +34,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> auth
                 // --- Existing page + asset rules (unchanged) ---------------
-                .requestMatchers("/", "/register", "/login", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/", "/login", "/css/**", "/js/**", "/images/**").permitAll()
 
                 // --- New REST API rules ------------------------------------
                 // Admin-only reads must come before the public GET rules so a
@@ -61,6 +61,25 @@ public class SecurityConfig {
 
                 // The staff dashboard analytics are entirely admin-only.
                 .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
+
+                // The administrator fulfils the SPOC role and is the only user
+                // allowed to issue customer credentials.
+                .requestMatchers("/api/admin/customers/**", "/api/admin/customers").hasRole("ADMIN")
+
+                // Sentiment re-analysis is an administrative operation.
+                .requestMatchers(HttpMethod.POST, "/api/feedback/*/sentiment").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/feedback/**", "/api/feedback").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/feedback/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/feedback/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/feedback").authenticated()
+
+                // Diagnostic sessions and ticket creation/read are available
+                // to any signed-in customer; tree management and staff workflow
+                // actions remain admin-only.
+                .requestMatchers(HttpMethod.PUT, "/api/tree").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/tree").authenticated()
+                .requestMatchers(HttpMethod.PATCH, "/api/tickets/*/assignment").hasRole("ADMIN")
+                .requestMatchers("/api/tickets/**", "/api/diagnostics/**").authenticated()
 
                 // --- Existing catch-all rules (unchanged) ------------------
                 .requestMatchers("/admin/**").hasRole("ADMIN")

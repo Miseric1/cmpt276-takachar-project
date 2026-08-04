@@ -1,4 +1,4 @@
-# API Reference — Iteration 2 (Dashboard, Knowledge Base)
+# API Reference — Dashboard, Knowledge Base, Ticketing
 
 All endpoints added in Iteration 2 are JSON REST APIs under `/api`. This
 reference is written so the frontend can integrate without reading backend code.
@@ -123,7 +123,7 @@ write API.
 |--------|------|-------------|
 | GET | `/api/dashboard` | Full summary: overview + all stat blocks + recent activity |
 | GET | `/api/dashboard/overview` | System-wide summary cards only |
-| GET | `/api/dashboard/tickets` | Ticket statistics (zeroed until Ticketing ships) |
+| GET | `/api/dashboard/tickets` | Live ticket counts, SLA health, rates, timings, and charts |
 | GET | `/api/dashboard/feedback` | Feedback statistics + submissions trend chart |
 | GET | `/api/dashboard/knowledge` | Knowledge statistics + leaderboards |
 | GET | `/api/dashboard/activity` | Paginated recent-activity feed |
@@ -135,8 +135,135 @@ counts. See `dto/dashboard/*` for exact field lists.
 
 ---
 
-## Existing endpoints (unchanged)
+## Diagnostic tree — `/api/tree`
 
-`/api/feedback` (CRUD) and the Thymeleaf pages (`/`, `/login`, `/register`,
-`/admin/home`, `/customer/home`, `/customer/feedback`) are untouched by this
-iteration.
+PR #17's UUID node graph is the authoritative diagnostic configuration.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/tree` | signed in | Read the complete flat node map and root UUID |
+| PUT | `/api/tree` | admin | Replace the complete diagnostic tree |
+
+Question options route to another question or a terminal `resolution` node.
+Tree replacement does not delete session history because active sessions store
+the current node UUID without a database foreign key.
+
+Resolution nodes accept an optional `knowledgeArticleId`. The referenced FAQ
+must exist and be published; the value is persisted and returned in the tree:
+
+```json
+{
+  "type": "resolution",
+  "text": "Restart the unit and confirm the indicator returns to green.",
+  "knowledgeArticleId": 12,
+  "options": []
+}
+```
+
+## Guided diagnostic sessions — `/api/diagnostics`
+
+All diagnostic endpoints require a signed-in session. Session access is limited
+to its customer and admins.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/sessions` | signed in | Start at the configured root question → `201` |
+| GET | `/sessions/{uuid}` | owner/admin | Current question, suggestion, and trail |
+| POST | `/sessions/{uuid}/answers` | owner/admin | Answer current question and advance |
+| POST | `/sessions/{uuid}/resolution` | owner/admin | Confirm `{resolved:true|false}` |
+| GET | `/suggestions?query=` | signed in | Top five published FAQ matches |
+
+Answer request:
+
+```json
+{
+  "questionId": "d7cbbf6e-6bb8-4eef-b4f0-04b73cfac531",
+  "optionId": "551eed75-a28c-4fa0-ad56-69320dcb11a1",
+  "answerText": "Optional detail"
+}
+```
+
+Resolution responses include `suggestedResolution` and, when configured on the
+resolution node, `suggestedArticle`. The status is one of `IN_PROGRESS`, `SOLUTION_SUGGESTED`,
+`READY_FOR_TICKET`, `RESOLVED_WITH_FAQ`, or `ESCALATED`.
+
+## Tickets — `/api/tickets`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/` | signed in | Admin: all/filter; customer: own only |
+| POST | `/` | signed in | Manual or diagnostic ticket → `201` |
+| GET | `/{id}` | owner/admin | Full ticket, trail, attachments, timeline |
+| PATCH | `/{id}/assignment` | admin | Department, assignee, SPOC, priority, target |
+| PATCH | `/{id}/status` | owner/admin | Admin workflow; customer may close resolved own ticket |
+| POST | `/{id}/timeline` | owner/admin | Add an auditable note |
+| POST | `/{id}/attachments` | owner/admin | Multipart image/video upload → `201` |
+| GET | `/{id}/attachments/{attachmentId}` | owner/admin | Download attachment |
+| DELETE | `/{id}/attachments/{attachmentId}` | owner/admin | Delete attachment and audit it |
+
+List filters: `keyword`, `status`, `priority`, `project`, `department`, `spoc`,
+`createdFrom`, `createdTo`, plus standard pagination and sorting.
+The default queue order is `targetResolutionAt,asc`, which places tickets with
+the nearest SLA target first. New targets are calculated from priority:
+`URGENT` 1 business day, `HIGH` 2 business days, `MEDIUM` 3 business days,
+and `LOW` 5 business days. Business days are Monday-Friday; weekends are
+skipped, but statutory and company holidays require a separate calendar.
+Safety/emergency wording is automatically promoted to `URGENT`, while clear
+service-outage wording is promoted to `HIGH`. Automatic triage never lowers a
+priority supplied by the caller.
+
+Create request:
+
+```json
+{
+  "subject": "Unit will not power on",
+  "description": "The indicator stays dark after reconnecting power.",
+  "project": "Pilot A",
+  "customerEmail": "customer@example.com",
+  "priority": "HIGH",
+  "spocEmail": "spoc@takachar.com",
+  "diagnosticSessionId": "31af18b3-fc14-43b0-b6d7-da824b90c392",
+  "suggestedArticleId": 12
+}
+```
+
+`customerEmail` is honored only for admin-created tickets. A diagnostic session
+and direct `suggestedArticleId` are optional; a session's own suggestion wins.
+Ticket status values are `OPEN`, `IN_PROGRESS`, `WAITING_FOR_CUSTOMER`,
+`WAITING_FOR_LOGISTICS`, `RESOLVED`, and `CLOSED`. Health is returned as
+`GREEN`, `YELLOW`, or `RED`.
+
+## Feedback sentiment
+
+Feedback and complaints share the same record. The `type` field is `FEEDBACK`
+by default or `COMPLAINT`. Admins can filter and sort the unified list:
+
+```text
+GET /api/feedback?type=COMPLAINT&sortBy=type&direction=ASC
+```
+
+Supported sort fields are `type`, `status`, `category`, `project`, `account`,
+`createdAt`, and `updatedAt`. Listing, updating, and deleting submissions are
+admin-only; authenticated customers may create them.
+
+Responses also include `sentiment`, `sentimentConfidence`,
+`sentimentModel`, and `sentimentAnalyzedAt`. New feedback is analysed on
+submission. Admins can retry with `POST /api/feedback/{id}/sentiment`.
+
+## Customer accounts — `/api/admin/customers`
+
+Public registration is disabled. An administrator acting as the SPOC manages
+customer credentials:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/admin/customers` | Create a customer from `{email,password}` → `201` |
+| GET | `/api/admin/customers` | List customer accounts without password data |
+
+Passwords must be 8–72 characters, are stored as BCrypt hashes, and are never
+returned. Duplicate emails return `409`.
+
+## Existing page endpoints
+
+The Thymeleaf pages `/`, `/login`, `/admin/home`, `/customer/home`, and
+`/customer/feedback` remain available. `/register` is intentionally disabled.

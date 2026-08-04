@@ -3,7 +3,12 @@ package com.example.demo;
 import com.example.demo.dto.knowledge.KnowledgeRequest;
 import com.example.demo.dto.knowledge.KnowledgeSummary;
 import com.example.demo.model.PublicationStatus;
+import com.example.demo.model.DiagnosticNode;
+import com.example.demo.model.DiagnosticOption;
+import com.example.demo.model.KnowledgeArticle;
 import com.example.demo.model.User;
+import com.example.demo.repository.DiagnosticNodeRepository;
+import com.example.demo.repository.KnowledgeArticleRepository;
 import com.example.demo.service.KnowledgeService;
 
 import org.springframework.boot.CommandLineRunner;
@@ -11,10 +16,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Locale;
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -38,6 +46,7 @@ import java.util.stream.Collectors;
 public class DataInitializer {
 
     @Bean
+    @Order(1)
     public CommandLineRunner createAdmin(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             if (userRepository.findByEmail("admin@test.com").isEmpty()) {
@@ -61,6 +70,7 @@ public class DataInitializer {
      * of them from the FAQ page exactly like one they created themselves.
      */
     @Bean
+    @Order(2)
     @ConditionalOnProperty(name = "app.seed-demo-data", havingValue = "true", matchIfMissing = true)
     public CommandLineRunner seedFaqArticles(KnowledgeService knowledgeService) {
         return args -> {
@@ -104,6 +114,78 @@ public class DataInitializer {
                 System.out.println("Seeded " + created + " placeholder FAQ articles.");
             }
         };
+    }
+
+    @Bean
+    @Order(3)
+    @ConditionalOnProperty(name = "app.seed-diagnostic-data", havingValue = "true", matchIfMissing = true)
+    public CommandLineRunner seedDiagnosticTree(DiagnosticNodeRepository nodeRepository,
+                                                KnowledgeArticleRepository articleRepository) {
+        return args -> {
+            if (nodeRepository.count() > 0) return;
+
+            DiagnosticNode equipmentResolution = resolutionNode("equipment-resolution",
+                    "Review the equipment troubleshooting steps in the related FAQ, power-cycle the unit, and check the indicator lights.",
+                    articleRepository.findByTitleIgnoreCase("What should I do if my unit won't power on?").orElse(null));
+            DiagnosticNode logisticsResolution = resolutionNode("logistics-resolution",
+                    "Review the pickup guidance in the related FAQ and confirm the site address and preferred pickup date.",
+                    articleRepository.findByTitleIgnoreCase("How do I schedule a biomass pickup?").orElse(null));
+            DiagnosticNode accountResolution = resolutionNode("account-resolution",
+                    "Use the account recovery steps in the related FAQ and check the registered email inbox.",
+                    articleRepository.findByTitleIgnoreCase("How do I reset my password?").orElse(null));
+            DiagnosticNode billingResolution = resolutionNode("billing-resolution",
+                    "Review the payment timeline in the related FAQ and confirm the pickup reference for the payment.",
+                    articleRepository.findByTitleIgnoreCase("When will I receive payment after a pickup?").orElse(null));
+
+            DiagnosticNode equipment = questionNode("equipment-question",
+                    "Which equipment symptom best matches the problem?", false, List.of(
+                            treeOption("Unit will not power on", equipmentResolution.getId(), 0),
+                            treeOption("Unit shows an error or overheats", equipmentResolution.getId(), 1)));
+            DiagnosticNode logistics = questionNode("logistics-question",
+                    "What kind of pickup or logistics help do you need?", false, List.of(
+                            treeOption("Schedule or change a pickup", logisticsResolution.getId(), 0),
+                            treeOption("Pickup is late or incomplete", logisticsResolution.getId(), 1)));
+            DiagnosticNode account = questionNode("account-question",
+                    "What account or access problem are you experiencing?", false, List.of(
+                            treeOption("Cannot sign in", accountResolution.getId(), 0),
+                            treeOption("Update account details", accountResolution.getId(), 1)));
+            DiagnosticNode billing = questionNode("billing-question",
+                    "What billing or payment topic can we help with?", false, List.of(
+                            treeOption("Payment has not arrived", billingResolution.getId(), 0),
+                            treeOption("Payment amount looks wrong", billingResolution.getId(), 1)));
+            DiagnosticNode root = questionNode("support-root",
+                    "Which area best describes your support issue?", true, List.of(
+                            treeOption("Equipment or hardware", equipment.getId(), 0),
+                            treeOption("Biomass pickup or logistics", logistics.getId(), 1),
+                            treeOption("Account or access", account.getId(), 2),
+                            treeOption("Billing or payments", billing.getId(), 3)));
+
+            nodeRepository.saveAll(List.of(root, equipment, logistics, account, billing,
+                    equipmentResolution, logisticsResolution, accountResolution, billingResolution));
+            System.out.println("Seeded the diagnostic support tree.");
+        };
+    }
+
+    private static DiagnosticNode questionNode(String key, String text, boolean root,
+                                               List<DiagnosticOption> options) {
+        return DiagnosticNode.builder()
+                .id(treeId(key)).type("question").text(text).root(root).options(options).build();
+    }
+
+    private static DiagnosticNode resolutionNode(String key, String text, KnowledgeArticle article) {
+        return DiagnosticNode.builder()
+                .id(treeId(key)).type("resolution").text(text).root(false)
+                .knowledgeArticleId(article == null ? null : article.getId()).options(List.of()).build();
+    }
+
+    private static DiagnosticOption treeOption(String label, UUID destination, int order) {
+        return DiagnosticOption.builder().id(UUID.randomUUID()).label(label)
+                .destinationNodeId(destination).sortOrder(order).build();
+    }
+
+    private static UUID treeId(String key) {
+        return UUID.nameUUIDFromBytes(("takachar-diagnostic:" + key)
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     private static final String[][] PLACEHOLDER_ARTICLES = {

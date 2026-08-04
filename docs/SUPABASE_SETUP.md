@@ -12,13 +12,14 @@ from environment variables at runtime.
 
 ## 1. What changed
 
-- `application-prod.properties` now targets Supabase and adds HikariCP connection
-  pooling tuned for Supabase's pgBouncer pooler, plus `open-in-view=false` and
-  Hibernate hardening.
-- Dev/test still use H2 (`application.properties` for local dev; an in-memory H2
-  for the test suite). **No code depends on the database vendor.**
-- The Spring profile is unchanged: production still runs with
-  `SPRING_PROFILES_ACTIVE=prod`. Only the values behind the env vars change.
+- `application.properties` now targets Supabase by default and adds HikariCP
+  connection pooling tuned for Supabase's pgBouncer pooler, plus
+  `open-in-view=false` and Hibernate hardening.
+- H2 is available only through the explicit `local` profile and as an isolated
+  in-memory database for the test suite. **No code depends on the database
+  vendor.**
+- Production may continue setting `SPRING_PROFILES_ACTIVE=prod`, but selecting a
+  profile is no longer required to use Supabase.
 
 The frontend requires **no changes** because of this migration.
 
@@ -41,7 +42,7 @@ The frontend requires **no changes** because of this migration.
 
 | Variable | Required | Example | Notes |
 |----------|----------|---------|-------|
-| `SPRING_PROFILES_ACTIVE` | yes (prod) | `prod` | Selects the Supabase profile |
+| `SPRING_PROFILES_ACTIVE` | no | `prod` | Optional production overrides; Supabase is already the default |
 | `SPRING_DATASOURCE_URL` | yes | `jdbc:postgresql://<ref>.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0` | Full JDBC URL |
 | `SPRING_DATASOURCE_USERNAME` | yes | `postgres.<ref>` | Supabase username |
 | `SPRING_DATASOURCE_PASSWORD` | yes | `••••••••` | Supabase database password |
@@ -60,7 +61,6 @@ The frontend requires **no changes** because of this migration.
 ## 4. Run it locally against Supabase
 
 ```bash
-export SPRING_PROFILES_ACTIVE=prod
 export SPRING_DATASOURCE_URL="jdbc:postgresql://<ref>.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0"
 export SPRING_DATASOURCE_USERNAME="postgres.<ref>"
 export SPRING_DATASOURCE_PASSWORD="your-password"
@@ -69,8 +69,8 @@ mvn spring-boot:run
 ```
 
 On first start, Hibernate (`ddl-auto=update`) creates all tables, indexes, and
-foreign keys automatically. To develop without Supabase, just run `mvn
-spring-boot:run` with no env vars — the default H2 profile is used.
+foreign keys automatically. To deliberately develop without Supabase, run with
+`SPRING_PROFILES_ACTIVE=local`; that explicit profile uses the local H2 file.
 
 ---
 
@@ -82,7 +82,6 @@ the same environment variables. Pass them at run time:
 ```bash
 docker build -t supportsync .
 docker run -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=prod \
   -e SPRING_DATASOURCE_URL="jdbc:postgresql://<ref>.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0" \
   -e SPRING_DATASOURCE_USERNAME="postgres.<ref>" \
   -e SPRING_DATASOURCE_PASSWORD="your-password" \
@@ -97,9 +96,9 @@ Deployment still uses Render; only the environment variables change.
 
 1. Render dashboard → your service → **Environment**.
 2. Remove the old Render-PostgreSQL variables (or repoint them).
-3. Add: `SPRING_PROFILES_ACTIVE=prod`, `SPRING_DATASOURCE_URL`,
-   `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` (and optionally the
-   pool-size vars).
+3. Add: `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`,
+   `SPRING_DATASOURCE_PASSWORD` (and optionally `SPRING_PROFILES_ACTIVE=prod`
+   plus the pool-size vars).
 4. Deploy. Startup logs should show HikariPool `TakacharHikariPool` connecting
    and Hibernate applying the schema.
 

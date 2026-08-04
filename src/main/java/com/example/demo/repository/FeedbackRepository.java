@@ -1,6 +1,8 @@
 package com.example.demo.repository;
 
 import com.example.demo.model.Feedback;
+import com.example.demo.model.SubmissionType;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +17,8 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     List<Feedback> findByStatus(String status);
 
     List<Feedback> findByCreatedBy(String createdBy);
+
+    List<Feedback> findByType(SubmissionType type, Sort sort);
 
     // ----- Dashboard analytics support -------------------------------------
 

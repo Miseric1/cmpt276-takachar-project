@@ -49,7 +49,7 @@ The scope of the project is divided into multiple independent but connected comp
 
 The project is divided into five epics, each representing a major feature of the system.
 
-The first epic is Authentication and User Management, which includes user registration, login, and role-based access control for admin, agent, and customer users.
+The first epic is Authentication and User Management, which includes SPOC-managed customer credentials, login, and role-based access control for admin, agent, and customer users. Public self-registration is disabled.
 
 The second epic is the Customer Feedback System, which allows users to submit feedback, categorize it, and track it over time. It also provides a dashboard for viewing feedback trends and recurring issues.
 
@@ -81,8 +81,18 @@ type — Knowledge Base articles — per the PRD.) Details live in `docs/`:
 - [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md) — every new REST endpoint, request/response shapes, auth, pagination, and error format (frontend integration guide).
 - [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md) — Supabase migration, environment variables, and Docker/Render deployment.
 
-The project targets Java 17 (Spring Boot 3.2.5). Run `mvn test` to verify; use
-`SPRING_PROFILES_ACTIVE=prod` with the Supabase env vars to run against Supabase,
-or no profile for local H2.
+The project targets Java 17 (Spring Boot 3.2.5). Run `mvn test` to verify. Normal
+startup uses Supabase through the `SPRING_DATASOURCE_*` environment variables;
+use `SPRING_PROFILES_ACTIVE=local` only when intentionally developing with H2.
+
+## Ticketing backend
+
+The backend now includes the guided diagnostic tree, published FAQ matching,
+support-ticket lifecycle and audit trail, customer/admin access boundaries,
+SPOC and customer email events with Resend or SMTP delivery, image/video
+attachments, complaint/feedback classification, SPOC-managed customer accounts,
+live ticket dashboard analytics, and Hugging Face feedback sentiment classification. See
+[`docs/TICKETING_BACKEND.md`](docs/TICKETING_BACKEND.md) for configuration and
+[`docs/API_REFERENCE.md`](docs/API_REFERENCE.md) for frontend integration.
 
 --- 
