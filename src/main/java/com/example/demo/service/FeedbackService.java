@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.model.Feedback;
 import com.example.demo.model.SubmissionType;
 import com.example.demo.repository.FeedbackRepository;
@@ -9,9 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.time.LocalDateTime;
 
 @Service
 public class FeedbackService {
@@ -20,8 +21,10 @@ public class FeedbackService {
     private final SentimentAnalysisService sentimentAnalysisService;
 
     @Autowired
-    public FeedbackService(FeedbackRepository feedbackRepository,
-                           SentimentAnalysisService sentimentAnalysisService) {
+    public FeedbackService(
+            FeedbackRepository feedbackRepository,
+            SentimentAnalysisService sentimentAnalysisService
+    ) {
         this.feedbackRepository = feedbackRepository;
         this.sentimentAnalysisService = sentimentAnalysisService;
     }
@@ -30,44 +33,95 @@ public class FeedbackService {
         return feedbackRepository.findAll();
     }
 
-    public List<Feedback> search(SubmissionType type, String sortBy, Sort.Direction direction) {
+    public List<Feedback> search(
+            SubmissionType type,
+            String sortBy,
+            Sort.Direction direction
+    ) {
         String property = switch (sortBy == null ? "createdAt" : sortBy) {
-            case "type", "status", "category", "project", "account", "createdAt", "updatedAt" ->
+            case "type", "status", "category", "project",
+                 "account", "createdAt", "updatedAt" ->
                     sortBy == null ? "createdAt" : sortBy;
-            default -> throw new IllegalArgumentException("Unsupported feedback sort field: " + sortBy);
+
+            default ->
+                    throw new IllegalArgumentException(
+                            "Unsupported feedback sort field: " + sortBy
+                    );
         };
-        Sort sort = Sort.by(direction == null ? Sort.Direction.DESC : direction, property);
-        return type == null ? feedbackRepository.findAll(sort) : feedbackRepository.findByType(type, sort);
+
+        Sort sort = Sort.by(
+                direction == null ? Sort.Direction.DESC : direction,
+                property
+        );
+
+        return type == null
+                ? feedbackRepository.findAll(sort)
+                : feedbackRepository.findByType(type, sort);
     }
 
     public Optional<Feedback> getFeedbackById(Long id) {
         return feedbackRepository.findById(id);
     }
 
+    public Feedback getFeedbackForReview(Long id) {
+        Feedback feedback = feedbackRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Feedback", id)
+                );
+
+        if ("OPEN".equalsIgnoreCase(feedback.getStatus())) {
+            feedback.setStatus("REVIEWED");
+            return feedbackRepository.save(feedback);
+        }
+
+        return feedback;
+    }
+
     public Feedback createFeedback(Feedback feedback) {
         if (feedback.getStatus() == null || feedback.getStatus().isEmpty()) {
             feedback.setStatus("OPEN");
         }
-        if (feedback.getType() == null) feedback.setType(SubmissionType.FEEDBACK);
+
+        if (feedback.getType() == null) {
+            feedback.setType(SubmissionType.FEEDBACK);
+        }
+
         analyze(feedback);
+
         return feedbackRepository.save(feedback);
     }
 
     public Feedback updateFeedback(Long id, Feedback updatedFeedback) {
-        return feedbackRepository.findById(id).map(feedback -> {
-            feedback.setCategory(updatedFeedback.getCategory());
-            if (updatedFeedback.getType() != null) feedback.setType(updatedFeedback.getType());
-            feedback.setProject(updatedFeedback.getProject());
-            feedback.setAccount(updatedFeedback.getAccount());
-            feedback.setDescription(updatedFeedback.getDescription());
-            feedback.setStatus(updatedFeedback.getStatus());
-            analyze(feedback);
-            // createdBy usually shouldn't change, but depends on logic
-            return feedbackRepository.save(feedback);
-        }).orElseThrow(() -> new RuntimeException("Feedback not found with id " + id));
+        return feedbackRepository.findById(id)
+                .map(feedback -> {
+                    feedback.setCategory(updatedFeedback.getCategory());
+
+                    if (updatedFeedback.getType() != null) {
+                        feedback.setType(updatedFeedback.getType());
+                    }
+
+                    feedback.setProject(updatedFeedback.getProject());
+                    feedback.setAccount(updatedFeedback.getAccount());
+                    feedback.setDescription(updatedFeedback.getDescription());
+
+                    if (updatedFeedback.getStatus() != null) {
+                        feedback.setStatus(updatedFeedback.getStatus());
+                    }
+
+                    analyze(feedback);
+
+                    return feedbackRepository.save(feedback);
+                })
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Feedback", id)
+                );
     }
 
     public void deleteFeedback(Long id) {
+        if (!feedbackRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Feedback", id);
+        }
+
         feedbackRepository.deleteById(id);
     }
 
@@ -77,16 +131,23 @@ public class FeedbackService {
 
     public Feedback reanalyzeSentiment(Long id) {
         Feedback feedback = feedbackRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Feedback not found with id " + id));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Feedback", id)
+                );
+
         analyze(feedback);
+
         return feedbackRepository.save(feedback);
     }
 
     private void analyze(Feedback feedback) {
         if (sentimentAnalysisService == null) {
-            return; // Keeps older isolated unit tests source-compatible.
+            return;
         }
-        SentimentResult result = sentimentAnalysisService.analyze(feedback.getDescription());
+
+        SentimentResult result =
+                sentimentAnalysisService.analyze(feedback.getDescription());
+
         feedback.setSentiment(result.label());
         feedback.setSentimentConfidence(result.confidence());
         feedback.setSentimentModel(result.model());
