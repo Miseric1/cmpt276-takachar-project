@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.model.Feedback;
 import com.example.demo.repository.FeedbackRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,26 +27,49 @@ public class FeedbackService {
         return feedbackRepository.findById(id);
     }
 
+    public Feedback getFeedbackForReview(Long id) {
+        Feedback feedback = feedbackRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Feedback", id)
+                );
+
+        if ("OPEN".equalsIgnoreCase(feedback.getStatus())) {
+            feedback.setStatus("REVIEWED");
+            return feedbackRepository.save(feedback);
+        }
+
+        return feedback;
+    }
+
     public Feedback createFeedback(Feedback feedback) {
         if (feedback.getStatus() == null || feedback.getStatus().isEmpty()) {
             feedback.setStatus("OPEN");
         }
+
         return feedbackRepository.save(feedback);
     }
 
     public Feedback updateFeedback(Long id, Feedback updatedFeedback) {
-        return feedbackRepository.findById(id).map(feedback -> {
-            feedback.setCategory(updatedFeedback.getCategory());
-            feedback.setProject(updatedFeedback.getProject());
-            feedback.setAccount(updatedFeedback.getAccount());
-            feedback.setDescription(updatedFeedback.getDescription());
-            feedback.setStatus(updatedFeedback.getStatus());
-            // createdBy usually shouldn't change, but depends on logic
-            return feedbackRepository.save(feedback);
-        }).orElseThrow(() -> new RuntimeException("Feedback not found with id " + id));
+        return feedbackRepository.findById(id)
+                .map(feedback -> {
+                    feedback.setCategory(updatedFeedback.getCategory());
+                    feedback.setProject(updatedFeedback.getProject());
+                    feedback.setAccount(updatedFeedback.getAccount());
+                    feedback.setDescription(updatedFeedback.getDescription());
+                    feedback.setStatus(updatedFeedback.getStatus());
+
+                    return feedbackRepository.save(feedback);
+                })
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Feedback", id)
+                );
     }
 
     public void deleteFeedback(Long id) {
+        if (!feedbackRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Feedback", id);
+        }
+
         feedbackRepository.deleteById(id);
     }
 
