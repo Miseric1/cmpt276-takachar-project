@@ -63,7 +63,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
 
                 // The administrator fulfils the SPOC role and is the only user
-                // allowed to issue customer credentials.
+                // allowed to issue credentials or choose account roles.
                 .requestMatchers("/api/admin/customers/**", "/api/admin/customers").hasRole("ADMIN")
 
                 // Sentiment re-analysis is an administrative operation.

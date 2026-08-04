@@ -11,11 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 @Service
 public class CustomerAccountService {
 
-    private static final String CUSTOMER_ROLE = "CUSTOMER";
+    private static final Set<String> MANAGED_ROLES = Set.of("CUSTOMER", "ADMIN");
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -32,16 +33,21 @@ public class CustomerAccountService {
             throw new DuplicateResourceException("An account already exists for " + email + ".");
         }
 
-        User customer = new User();
-        customer.setEmail(email);
-        customer.setPassword(passwordEncoder.encode(request.password()));
-        customer.setRole(CUSTOMER_ROLE);
-        return toResponse(userRepository.save(customer));
+        String role = request.role().trim().toUpperCase(Locale.ROOT);
+        if (!MANAGED_ROLES.contains(role)) {
+            throw new IllegalArgumentException("Role must be CUSTOMER or ADMIN.");
+        }
+
+        User account = new User();
+        account.setEmail(email);
+        account.setPassword(passwordEncoder.encode(request.password()));
+        account.setRole(role);
+        return toResponse(userRepository.save(account));
     }
 
     @Transactional(readOnly = true)
     public List<CustomerAccountResponse> list() {
-        return userRepository.findAllByRoleIgnoreCaseOrderByEmailAsc(CUSTOMER_ROLE)
+        return userRepository.findAllByOrderByEmailAsc()
                 .stream().map(this::toResponse).toList();
     }
 
