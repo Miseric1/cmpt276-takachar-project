@@ -119,17 +119,17 @@
             <article class="admin-summary-card admin-summary-card--red">
                 <p>Overdue tickets</p>
 
-                <strong>0</strong>
+                <strong th:text="${overdueTickets}">0</strong>
 
-                <span>Ticket system coming soon</span>
+                <span>Past target resolution date</span>
             </article>
 
             <article class="admin-summary-card admin-summary-card--green">
                 <p>Resolved tickets</p>
 
-                <strong>0</strong>
+                <strong th:text="${resolvedTickets}">0</strong>
 
-                <span>Ticket system coming soon</span>
+                <span>Marked resolved</span>
             </article>
 
         </section>
@@ -148,16 +148,83 @@
             </a>
             </div>
 
-            <div class="admin-empty-state">
-                <div class="admin-empty-icon">▱</div>
+            <p
+                    class="admin-empty-message"
+                    th:if="${#lists.isEmpty(activeTickets)}"
+            >
+                No open tickets right now.
+            </p>
 
-                <div>
-                    <h3>No support tickets yet</h3>
-                    <p>
-                        Ticket information will appear here once the support-ticket
-                        workflow is connected.
-                    </p>
-                </div>
+            <div
+                    class="admin-table-wrapper"
+                    th:unless="${#lists.isEmpty(activeTickets)}"
+            >
+
+                <table class="admin-feedback-table">
+
+                    <thead>
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Customer</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Target resolution</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+
+                    <tr th:each="ticket : ${activeTickets}">
+
+                        <td>
+                            <span class="ticket-ref" th:text="${ticket.referenceNumber}">
+                                TKT-0000
+                            </span>
+                            <span th:text="${ticket.subject}">Subject</span>
+                        </td>
+
+                        <td th:text="${ticket.customerEmail}">
+                            customer@example.com
+                        </td>
+
+                        <td>
+                            <span
+                                    th:text="${ticket.priority}"
+                                    th:class="'ticket-priority-badge ticket-priority-' + ${#strings.toLowerCase(ticket.priority)}"
+                            >
+                                MEDIUM
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="ticket-status-cell">
+                                <span
+                                        class="ticket-health-dot"
+                                        th:classappend="'ticket-health-' + ${#strings.toLowerCase(ticket.health)}"
+                                ></span>
+                                <span
+                                        th:text="${ticket.status}"
+                                        th:class="'ticket-status-badge ticket-status-' + ${#strings.toLowerCase(ticket.status)}"
+                                >
+                                    OPEN
+                                </span>
+                            </span>
+                        </td>
+
+                        <td
+                                th:if="${ticket.targetResolutionAt != null}"
+                                th:text="${#temporals.format(ticket.targetResolutionAt, 'MMM d, yyyy, h:mm a')}"
+                        >
+                            Aug 6, 2026, 7:45 PM
+                        </td>
+                        <td th:unless="${ticket.targetResolutionAt != null}">—</td>
+
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
             </div>
 
         </section>
