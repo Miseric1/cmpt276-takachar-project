@@ -59,7 +59,7 @@ public class AdminController {
         model.addAttribute("email", userDetails.getUsername());
         model.addAttribute("feedbackList", openFeedbackList);
         model.addAttribute("totalFeedback", feedbackList.size());
-        model.addAttribute("openFeedback", openFeedback);
+        model.addAttribute("openFeedback", openFeedbackList.size());
         model.addAttribute("themes",
                 feedbackThemeService.extractThemes(feedbackList, DASHBOARD_THEME_LIMIT));
 
