@@ -1996,3 +1996,115 @@ body.admin-dashboard-body {
 .ticket-pagination[hidden] {
     display: none;
 }
+
+/* SPOC customer access */
+
+.spoc-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.spoc-policy-value {
+    font-size: 26px !important;
+}
+
+.spoc-account-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.8fr) minmax(420px, 1.2fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.spoc-account-grid .admin-panel {
+    margin-bottom: 0;
+}
+
+.spoc-field-help {
+    margin: 7px 0 0;
+    color: #7c858e;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.spoc-form-message {
+    margin-bottom: 18px;
+    padding: 11px 13px;
+    border: 1px solid;
+    border-radius: 7px;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.spoc-form-message--success {
+    border-color: #b9ddc1;
+    background: #edf8ef;
+    color: #236b32;
+}
+
+.spoc-form-message--error {
+    border-color: #efcccc;
+    background: #fff0f0;
+    color: #9f2f2f;
+}
+
+.spoc-form-message[hidden] {
+    display: none;
+}
+
+.spoc-customer-form .btn:disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+.spoc-customer-table {
+    min-width: 520px;
+}
+
+/* Submission types and complaint form */
+
+.submission-type-badge {
+    display: inline-block;
+    margin-left: 7px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    background: #eaf3fb;
+    color: #27638f;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.submission-type-badge--complaint {
+    background: #fff0f0;
+    color: #a23a3a;
+}
+
+.complaint-guidance {
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid #f1d69d;
+    border-radius: 9px;
+    background: #fff8e8;
+    color: #6f5520;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.complaint-guidance strong {
+    display: block;
+    margin-bottom: 3px;
+    color: #5d4516;
+}
+
+@media (max-width: 960px) {
+    .spoc-account-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .spoc-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}

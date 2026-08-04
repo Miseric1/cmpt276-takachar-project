@@ -24,13 +24,17 @@
                 <span class="admin-nav-icon">▤</span>
                 Submit feedback
             </a>
+            <a class="admin-nav-link" th:href="@{/customer/complaint}">
+                <span class="admin-nav-icon">!</span>
+                Submit complaint
+            </a>
             <a class="admin-nav-link admin-nav-link--active" th:href="@{/customer/faq}">
                 <span class="admin-nav-icon">▣</span>
                 FAQ &amp; Knowledge Base
             </a>
 
             <a class="admin-nav-link" th:href="@{/customer/support}">
-                <span class="admin-nav-icon">▦</span>
+                <span class="admin-nav-icon">⌘</span>
                 Support & Troubleshooting
             </a>
         </nav>
@@ -112,7 +116,7 @@
                 <h3>Can't find what you're looking for?</h3>
                 <p>Start a guided diagnostic and we'll walk you through a few quick questions to pinpoint the issue.</p>
             </div>
-            <a th:href="@{/customer/feedback}" class="btn btn-primary btn-inline faq-cta-button">Start a diagnostic ticket</a>
+            <a th:href="@{/customer/support}" class="btn btn-primary btn-inline faq-cta-button">Start guided troubleshooting</a>
         </section>
 
     </main>

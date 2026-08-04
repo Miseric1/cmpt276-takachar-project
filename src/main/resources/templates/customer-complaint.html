@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submit Feedback | Takachar</title>
+    <title>Submit Complaint | Takachar</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 
@@ -12,7 +12,7 @@
 
     <aside class="admin-sidebar">
         <div class="admin-brand admin-brand--logo">
-            <img th:src="@{/images/takachar-logo.png}" alt="Takachar" class="admin-brand-image" />
+            <img th:src="@{/images/takachar-logo.png}" alt="Takachar" class="admin-brand-image">
         </div>
 
         <nav class="admin-nav">
@@ -20,11 +20,11 @@
                 <span class="admin-nav-icon">▦</span>
                 Dashboard
             </a>
-            <a class="admin-nav-link admin-nav-link--active" th:href="@{/customer/feedback}">
+            <a class="admin-nav-link" th:href="@{/customer/feedback}">
                 <span class="admin-nav-icon">▤</span>
                 Submit feedback
             </a>
-            <a class="admin-nav-link" th:href="@{/customer/complaint}">
+            <a class="admin-nav-link admin-nav-link--active" th:href="@{/customer/complaint}">
                 <span class="admin-nav-icon">!</span>
                 Submit complaint
             </a>
@@ -32,12 +32,10 @@
                 <span class="admin-nav-icon">▣</span>
                 FAQ &amp; Knowledge Base
             </a>
-
             <a class="admin-nav-link" th:href="@{/customer/support}">
                 <span class="admin-nav-icon">⌘</span>
-                Support & Troubleshooting
+                Support &amp; Troubleshooting
             </a>
-            
         </nav>
 
         <div class="admin-sidebar-bottom">
@@ -49,11 +47,10 @@
     </aside>
 
     <main class="admin-main">
-
         <header class="admin-header">
             <div>
                 <p class="admin-header-label">Customer workspace</p>
-                <h1>Submit Feedback</h1>
+                <h1>Submit a complaint</h1>
             </div>
 
             <div class="admin-profile">
@@ -68,87 +65,43 @@
             </div>
         </header>
 
-        <!-- Success notification -->
-        <div class="alert alert-success" th:if="${param.submitted}">
-            Feedback submitted successfully.
-        </div>
-
-        <!-- Welcome panel -->
         <section class="admin-panel">
             <div class="admin-panel-header">
                 <div>
-                    <h2>Welcome to Takachar Support</h2>
-                    <p>
-                        Submit product feedback, report technical concerns,
-                        or share suggestions with the Takachar team.
-                    </p>
+                    <h2>Complaint details</h2>
+                    <p>Report an unresolved service, equipment, logistics, account, or billing issue.</p>
                 </div>
-            </div>
-        </section>
-
-        <!-- Feedback submission form -->
-        <section class="admin-panel" id="submit-feedback">
-
-            <div class="admin-panel-header">
-                <div>
-                    <h2>Submit feedback</h2>
-                    <p>
-                        Let us know what is working, what is not, or what
-                        you would like to see next.
-                    </p>
-                </div>
+                <span class="submission-type-badge submission-type-badge--complaint">Complaint</span>
             </div>
 
-            <form th:action="@{/customer/feedback}" method="post">
+            <div class="alert alert-success" th:if="${param.submitted}">
+                Your complaint was submitted successfully. The Takachar team can now review and track it.
+            </div>
 
-                <input
-                        type="hidden"
-                        th:name="${_csrf.parameterName}"
-                        th:value="${_csrf.token}"
-                >
+            <div class="complaint-guidance">
+                <strong>Looking for an immediate solution?</strong>
+                Try Support &amp; Troubleshooting first. The guided questions may suggest a knowledge-base answer or create a support ticket with your diagnostic history.
+            </div>
+
+            <form th:action="@{/customer/complaint}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                 <div class="form-group">
-
-                    <label for="category">
-                        Category
-                    </label>
-
-                    <select
-                            id="category"
-                            name="category"
-                            required
-                    >
-                        <option value="">
-                            Select a category
-                        </option>
-
-                        <option value="PRODUCT">
-                            Product
-                        </option>
-
-                        <option value="TECHNICAL">
-                            Technical issue
-                        </option>
-
-                        <option value="SERVICE">
-                            Customer service
-                        </option>
-
-                        <option value="OTHER">
-                            Other
-                        </option>
+                    <label for="category">Complaint category</label>
+                    <select id="category" name="category" required>
+                        <option value="">Select a category</option>
+                        <option value="EQUIPMENT">Equipment or hardware</option>
+                        <option value="LOGISTICS">Biomass pickup or logistics</option>
+                        <option value="ACCOUNT">Account or access</option>
+                        <option value="BILLING">Billing or payments</option>
+                        <option value="SERVICE">Customer service</option>
+                        <option value="OTHER">Other</option>
                     </select>
-
                 </div>
 
                 <div class="form-row">
-
                     <div class="form-group">
-
-                        <label for="project">
-                            Project
-                        </label>
-
+                        <label for="project">Project</label>
                         <input
                                 id="project"
                                 name="project"
@@ -156,15 +109,10 @@
                                 placeholder="Enter the project name"
                                 required
                         >
-
                     </div>
 
                     <div class="form-group">
-
-                        <label for="account">
-                            Company or account
-                        </label>
-
+                        <label for="account">Company or account</label>
                         <input
                                 id="account"
                                 name="account"
@@ -172,38 +120,23 @@
                                 placeholder="Enter your company or account"
                                 required
                         >
-
                     </div>
-
                 </div>
 
                 <div class="form-group">
-
-                    <label for="description">
-                        Feedback description
-                    </label>
-
+                    <label for="description">Complaint description</label>
                     <textarea
                             id="description"
                             name="description"
                             rows="6"
-                            placeholder="Describe the issue or feedback in detail..."
+                            placeholder="Explain what happened, when it happened, and what resolution you need..."
                             required
                     ></textarea>
-
                 </div>
 
-                <button
-                        type="submit"
-                        class="btn btn-primary"
-                >
-                    Submit feedback
-                </button>
-
+                <button type="submit" class="btn btn-primary">Submit complaint</button>
             </form>
-
         </section>
-
     </main>
 </div>
 </body>

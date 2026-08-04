@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -25,6 +26,14 @@ class CustomerAccountApiIntegrationTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private UserRepository userRepository;
     @Autowired private PasswordEncoder passwordEncoder;
+
+    @Test
+    void adminActingAsSpocCanOpenCustomerAccessPage() throws Exception {
+        mockMvc.perform(get("/admin/customers")
+                        .with(user("spoc@takachar.com").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin-customers"));
+    }
 
     @Test
     void adminActingAsSpocCreatesAndListsCustomerWithoutExposingPassword() throws Exception {
