@@ -193,6 +193,13 @@
                                 FEEDBACK
                             </span>
 
+                            <span
+                                    class="feedback-loggedby-badge"
+                                    th:if="${feedback.loggedBy != null}"
+                            >
+                                Logged by Takachar staff on your behalf
+                            </span>
+
                             <h3 th:text="${feedback.project}">
                                 Project name
                             </h3>

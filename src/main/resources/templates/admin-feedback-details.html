@@ -207,6 +207,28 @@
 
                 </div>
 
+                <div
+                        class="feedback-detail-item"
+                        th:if="${feedback.loggedBy != null}"
+                >
+
+                    <span class="feedback-meta-label">
+                        Logged by (staff)
+                    </span>
+
+                    <strong
+                            class="feedback-meta-value"
+                            th:text="${feedback.loggedBy}"
+                    >
+                        admin@example.com
+                    </strong>
+
+                    <p class="admin-field-help">
+                        Recorded by an administrator on the customer's behalf.
+                    </p>
+
+                </div>
+
                 <div class="feedback-detail-item">
 
                     <span class="feedback-meta-label">

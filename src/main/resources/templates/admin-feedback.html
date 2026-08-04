@@ -214,11 +214,29 @@
                     </p>
                 </div>
 
-                <div class="admin-feedback-count">
-                    <span th:text="${totalFeedback}">0</span>
-                    entries
+                <div class="admin-panel-actions">
+
+                    <div class="admin-feedback-count">
+                        <span th:text="${totalFeedback}">0</span>
+                        entries
+                    </div>
+
+                    <a
+                            class="admin-secondary-button"
+                            th:href="@{/admin/feedback/new}"
+                    >
+                        Log feedback
+                    </a>
+
                 </div>
 
+            </div>
+
+            <div
+                    class="alert alert-success"
+                    th:if="${param.logged}"
+            >
+                Feedback logged on behalf of the customer.
             </div>
 
             <div class="feedback-filter-bar">
@@ -376,6 +394,14 @@
                             >
                                 customer@example.com
                             </strong>
+
+                            <span
+                                    class="feedback-loggedby-badge"
+                                    th:if="${feedback.loggedBy != null}"
+                                    th:text="'Logged by ' + ${feedback.loggedBy}"
+                            >
+                                Logged by staff
+                            </span>
 
                         </div>
 

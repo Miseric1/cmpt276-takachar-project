@@ -374,6 +374,14 @@
                                 customer@example.com
                             </strong>
 
+                            <span
+                                    class="feedback-loggedby-badge"
+                                    th:if="${feedback.loggedBy != null}"
+                                    th:text="'Logged by ' + ${feedback.loggedBy}"
+                            >
+                                Logged by staff
+                            </span>
+
                         </div>
 
                         <div class="feedback-meta-item">
