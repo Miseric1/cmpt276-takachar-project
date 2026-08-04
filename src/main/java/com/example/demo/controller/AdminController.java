@@ -50,16 +50,16 @@ public class AdminController {
     ) {
         List<Feedback> feedbackList = feedbackService.getAllFeedback();
 
-        long openFeedback = feedbackList.stream()
+        List<Feedback> openFeedbackList = feedbackList.stream()
                 .filter(feedback ->
                         "OPEN".equalsIgnoreCase(feedback.getStatus())
                 )
-                .count();
+                .toList();
 
         model.addAttribute("email", userDetails.getUsername());
-        model.addAttribute("feedbackList", feedbackList);
+        model.addAttribute("feedbackList", openFeedbackList);
         model.addAttribute("totalFeedback", feedbackList.size());
-        model.addAttribute("openFeedback", openFeedback);
+        model.addAttribute("openFeedback", openFeedbackList.size());
         model.addAttribute("themes",
                 feedbackThemeService.extractThemes(feedbackList, DASHBOARD_THEME_LIMIT));
 
