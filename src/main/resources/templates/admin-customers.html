@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Access | Takachar</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <script defer th:src="@{/js/spoc-customers.js}"></script>
+</head>
+
+<body class="admin-dashboard-body">
+<div class="admin-layout">
+
+    <aside class="admin-sidebar">
+        <div class="admin-brand admin-brand--logo">
+            <img th:src="@{/images/takachar-logo.png}" alt="Takachar" class="admin-brand-image">
+        </div>
+
+        <nav class="admin-nav">
+            <a class="admin-nav-link" th:href="@{/admin/home}">
+                <span class="admin-nav-icon">▦</span>
+                Dashboard
+            </a>
+            <a class="admin-nav-link" th:href="@{/admin/feedback}">
+                <span class="admin-nav-icon">▤</span>
+                Feedback tracker
+            </a>
+            <a class="admin-nav-link" th:href="@{/admin/faq}">
+                <span class="admin-nav-icon">▣</span>
+                FAQ &amp; knowledge base
+            </a>
+            <a class="admin-nav-link" th:href="@{/admin/tickets}">
+                <span class="admin-nav-icon">▱</span>
+                Support tickets
+            </a>
+            <a class="admin-nav-link admin-nav-link--active" th:href="@{/admin/customers}">
+                <span class="admin-nav-icon">●</span>
+                Customer accounts
+            </a>
+            <a class="admin-nav-link" th:href="@{/admin/tree}">
+                <span class="admin-nav-icon">⌘</span>
+                Diagnostic Tree
+            </a>
+        </nav>
+
+        <div class="admin-sidebar-bottom">
+            <a class="admin-nav-link" th:href="@{/customer/home}">
+                <span class="admin-nav-icon">⇆</span>
+                View as customer
+            </a>
+        </div>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <div>
+                <p class="admin-header-label">SPOC workspace</p>
+                <h1>Customer account access</h1>
+            </div>
+
+            <div class="admin-profile">
+                <div class="admin-profile-details">
+                    <strong th:text="${email}">admin@example.com</strong>
+                    <span>Administrator / SPOC</span>
+                </div>
+                <form th:action="@{/logout}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="admin-logout-button">Log out</button>
+                </form>
+            </div>
+        </header>
+
+        <section class="admin-summary-grid spoc-summary-grid">
+            <article class="admin-summary-card admin-summary-card--green">
+                <p>Provisioned customers</p>
+                <strong id="spoc-customer-count">—</strong>
+                <span>Accounts that can access the customer workspace</span>
+            </article>
+
+            <article class="admin-summary-card">
+                <p>Account policy</p>
+                <strong class="spoc-policy-value">SPOC</strong>
+                <span>Public registration is disabled</span>
+            </article>
+        </section>
+
+        <div class="spoc-account-grid">
+            <section class="admin-panel">
+                <div class="admin-panel-header">
+                    <div>
+                        <h2>Create customer access</h2>
+                        <p>Issue login credentials after the customer has been approved by the SPOC.</p>
+                    </div>
+                </div>
+
+                <div id="spoc-form-message" class="spoc-form-message" role="status" aria-live="polite" hidden></div>
+
+                <form id="spoc-customer-form" class="spoc-customer-form">
+                    <div class="form-group">
+                        <label for="spoc-customer-email">Customer email</label>
+                        <input
+                                id="spoc-customer-email"
+                                name="email"
+                                type="email"
+                                autocomplete="email"
+                                placeholder="customer@example.com"
+                                required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="spoc-customer-password">Temporary password</label>
+                        <input
+                                id="spoc-customer-password"
+                                name="password"
+                                type="password"
+                                autocomplete="new-password"
+                                minlength="8"
+                                maxlength="72"
+                                placeholder="At least 8 characters"
+                                required
+                        >
+                        <p class="spoc-field-help">The password is securely hashed and is never shown in the customer list.</p>
+                    </div>
+
+                    <button id="spoc-create-button" type="submit" class="btn btn-primary">
+                        Create customer account
+                    </button>
+                </form>
+            </section>
+
+            <section class="admin-panel">
+                <div class="admin-panel-header">
+                    <div>
+                        <h2>Customer accounts</h2>
+                        <p>Review the customers who currently have access.</p>
+                    </div>
+                    <span class="admin-feedback-count" id="spoc-list-count">Loading…</span>
+                </div>
+
+                <div id="spoc-list-error" class="spoc-form-message spoc-form-message--error" role="alert" hidden>
+                    Customer accounts could not be loaded. Refresh the page to try again.
+                </div>
+
+                <div id="spoc-customer-empty" class="admin-empty-state" hidden>
+                    <div class="admin-empty-icon">●</div>
+                    <div>
+                        <h3>No customer accounts yet</h3>
+                        <p>Create the first customer account using the form.</p>
+                    </div>
+                </div>
+
+                <div id="spoc-customer-table-wrapper" class="admin-table-wrapper" hidden>
+                    <table class="admin-feedback-table spoc-customer-table">
+                        <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Access</th>
+                        </tr>
+                        </thead>
+                        <tbody id="spoc-customer-list"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+</body>
+</html>

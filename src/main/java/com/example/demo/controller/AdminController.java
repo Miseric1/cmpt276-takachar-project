@@ -161,6 +161,16 @@ public class AdminController {
         return "admin-tickets";
     }
 
+    @GetMapping("/admin/customers")
+    public String customerAccounts(
+            @AuthenticationPrincipal UserDetails userDetails,
+            Model model
+    ) {
+        model.addAttribute("email", userDetails.getUsername());
+
+        return "admin-customers";
+    }
+
     @GetMapping("/admin/tree")
     public String diagnosticTree(
             @AuthenticationPrincipal UserDetails userDetails,
