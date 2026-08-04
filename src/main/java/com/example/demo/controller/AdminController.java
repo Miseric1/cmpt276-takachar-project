@@ -8,6 +8,7 @@ import com.example.demo.model.Feedback;
 import com.example.demo.service.DashboardService;
 import com.example.demo.service.FeedbackService;
 import com.example.demo.service.TicketService;
+import com.example.demo.service.analytics.FeedbackThemeService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,17 +25,22 @@ import java.util.List;
 public class AdminController {
 
     private static final int TICKET_PREVIEW_LIMIT = 5;
+    private static final int DASHBOARD_THEME_LIMIT = 5;
+    private static final int TRACKER_THEME_LIMIT = 10;
 
     private final FeedbackService feedbackService;
     private final TicketService ticketService;
     private final DashboardService dashboardService;
+    private final FeedbackThemeService feedbackThemeService;
 
     public AdminController(FeedbackService feedbackService,
                             TicketService ticketService,
-                            DashboardService dashboardService) {
+                            DashboardService dashboardService,
+                            FeedbackThemeService feedbackThemeService) {
         this.feedbackService = feedbackService;
         this.ticketService = ticketService;
         this.dashboardService = dashboardService;
+        this.feedbackThemeService = feedbackThemeService;
     }
 
     @GetMapping("/admin/home")
@@ -54,6 +60,8 @@ public class AdminController {
         model.addAttribute("feedbackList", feedbackList);
         model.addAttribute("totalFeedback", feedbackList.size());
         model.addAttribute("openFeedback", openFeedback);
+        model.addAttribute("themes",
+                feedbackThemeService.extractThemes(feedbackList, DASHBOARD_THEME_LIMIT));
 
         addTicketOverviewAttributes(userDetails, model);
 
@@ -103,6 +111,8 @@ public class AdminController {
         model.addAttribute("feedbackList", feedbackList);
         model.addAttribute("totalFeedback", feedbackList.size());
         model.addAttribute("openFeedback", openFeedback);
+        model.addAttribute("themes",
+                feedbackThemeService.extractThemes(feedbackList, TRACKER_THEME_LIMIT));
 
         return "admin-feedback";
     }

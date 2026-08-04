@@ -2107,4 +2107,132 @@ body.admin-dashboard-body {
     .spoc-summary-grid {
         grid-template-columns: 1fr;
     }
+/* Recurring feedback themes */
+
+.theme-empty {
+    margin: 0;
+    color: #7c858e;
+    font-size: 13px;
+}
+
+.theme-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.theme-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px;
+    border: 1px solid #e3e6e9;
+    border-radius: 20px;
+    background: #f7f8f9;
+    color: #272d33;
+    font-size: 13px;
+}
+
+.theme-chip--negative {
+    background: #fff0f0;
+    border-color: #efcccc;
+}
+
+.theme-chip-count {
+    padding: 1px 8px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e3e6e9;
+    color: #69727b;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.theme-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.theme-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid #eef0f2;
+}
+
+.theme-row:last-child {
+    border-bottom: none;
+}
+
+.theme-term {
+    padding: 5px 12px;
+    border: 1px solid #d7dbdf;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #272d33;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.theme-term:hover {
+    background: #f1f3f5;
+}
+
+.theme-mentions {
+    color: #69727b;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.theme-breakdown {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.theme-category-chip {
+    padding: 3px 9px;
+    border-radius: 12px;
+    background: #f1f3f5;
+    color: #69727b;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.theme-sentiments {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    color: #69727b;
+    font-size: 12px;
+}
+
+.theme-sentiment {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.theme-sentiment-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #b3bac1;
+}
+
+.theme-sentiment-dot--positive {
+    background: #4caf7d;
+}
+
+.theme-sentiment-dot--neutral {
+    background: #b3bac1;
+}
+
+.theme-sentiment-dot--negative {
+    background: #dc5b5b;
 }

@@ -40,3 +40,4 @@ data/
 application-secrets.properties
 .env
 .env.local
+.claude/
